@@ -1,7 +1,7 @@
 // online data
 
 function get(url) {
-    var out;
+    // var out;
     $.ajax({
         url: url,
         dataType: "json",
@@ -9,7 +9,7 @@ function get(url) {
             xhr.setRequestHeader("Authorization", "Basic " + token);
         }
     })
-    .done(main)
+    .done(main);
 }
 
 // offline & online
@@ -17,19 +17,34 @@ function get(url) {
 var //rawRawData 
     // rawRawData = $.getJSON('TCexample.json'), //offline
     baseUrl = "https://creatorci.eu.zmags.com/",
+    paramSkip = 0,
+    paramNumBuilds = 25,
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
-    token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";;
+    // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
+                paramSkip + "," + paramNumBuilds + "}&depth=1",
+    token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";
 
-get(url);
+    get(url);
+    
+function reload(url) {
+    document.getElementById('table').innerHTML = '';
+    paramSkip = document.getElementById('skip').value;
+    paramNumBuilds = document.getElementById('num_builds').value;
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
+                paramSkip + "," + paramNumBuilds + "}&depth=1",
+    get(url);
+}
 
 function main (data){
     var rawRawData = data;
     var rawData = rawRawData;
-    $("#containerRaw").text(JSON.stringify(rawData, null, 4));
-    $("#buttonRaw").click(function() {
-    	$("#containerRaw").toggle();
-    });
+    
+    // API output for debug (also code in index.html)
+    // $("#containerRaw").text(JSON.stringify(rawData, null, 4));
+    // $("#buttonRaw").click(function() {
+    //	    $("#containerRaw").toggle();
+    // });
 
     var table = document.getElementById('table');
     var row = table.insertRow(0);
@@ -68,10 +83,25 @@ function main (data){
         if (buildData.building) {
             cell.innerHTML = "building";
         } else {
-            cell.innerHTML = dur.getMinutes() + ":" + ("00" + dur.getSeconds()).substr(-2,2) + "." + dur.getMilliseconds();
+            var durString = dur.getMinutes() + ":" + ("00" + dur.getSeconds()).substr(-2,2) + "." + dur.getMilliseconds()
+            if (paramNumBuilds <= 25) {
+                cell.innerHTML = durString;
+            } else {
+                cell.innerHTML = '*';
+                cell.className = 'ellipsis';
+                cell.title = durString;
+            }
         }
+        
         var cell = table.rows[2].insertCell(-1);
-        cell.innerHTML = new Date(buildData.timestamp).toString().split(" ")[4];
+        var dateString = new Date(buildData.timestamp).toString().split(" ")[4];
+        if (paramNumBuilds <= 25) {
+            cell.innerHTML = dateString;
+        } else {
+            cell.innerHTML = '*';
+            cell.className = 'ellipsis';
+            cell.title = dateString;
+        }
         
     	for (var i = 0; i < buildData.subBuilds.length; i++) {
     		subBuildData = buildData.subBuilds[i];
@@ -87,7 +117,7 @@ function main (data){
     				break;
             }
             var jobName = subBuildData.jobName,
-                url = baseUrl + subBuildData.url + "/TestComplete/",
+                url = baseUrl + subBuildData.url + "TestComplete/",
                 buildNumber = subBuildData.buildNumber;
             //var indexOf;
             if (!document.getElementById(jobName)) {
@@ -95,7 +125,7 @@ function main (data){
                 row.setAttribute('id',jobName);
                 // $("#table").append("<tr id=" + jobName + ">");
                 var cell = row.insertCell(0);
-                cell.innerHTML = jobName;
+                cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
                 // $("#table").append("   <td> " + jobName + " </td>");
                 cell = row.insertCell(1);
                 cell.setAttribute('class',tdclass);

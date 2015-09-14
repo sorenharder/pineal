@@ -10,3 +10,12 @@ td.unknown {
 td.building {
     background-color: pink;
 }
+
+input.num {
+    width: 40px;
+}
+
+td.ellipsis {
+    cursor: pointer;
+    text-align: center;
+}
