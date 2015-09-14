@@ -1,0 +1,12 @@
+td.fail {
+    background-color: red;
+}
+td.success {
+    background-color: green;
+}
+td.unknown {
+    background-color: yellow;
+}
+td.building {
+    background-color: pink;
+}
