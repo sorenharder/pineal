@@ -29,10 +29,11 @@ var //rawRawData
     
 function reload(url) {
     document.getElementById('table').innerHTML = '';
-    paramSkip = document.getElementById('skip').value;
-    paramNumBuilds = document.getElementById('num_builds').value;
+    paramSkip = parseInt(document.getElementById('skip').value,10);
+    paramNumBuilds = parseInt(document.getElementById('num_builds',10).value);
+    paramNumBuildsTotal = paramSkip +  paramNumBuilds;
     url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
-                paramSkip + "," + paramNumBuilds + "}&depth=1",
+                paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
     get(url);
 }
 
@@ -47,21 +48,24 @@ function main (data){
     // });
 
     var table = document.getElementById('table');
-    var row = table.insertRow(0);
-    var cell = row.insertCell(0);
-    cell.innerHTML = "TC Build";
-    var row = table.insertRow(1);
-    var cell = row.insertCell(0);
-    cell.innerHTML = "Duration";
-    var row = table.insertRow(2);
-    var cell = row.insertCell(0);
-    cell.innerHTML = "Timestamp";
+    var tableRow = table.insertRow(0);
+    var tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "TC Build";
+    tableRow = table.insertRow(1);
+    tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "Duration";
+    tableRow = table.insertRow(2);
+    tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "Timestamp";
  
 
     for (var j = 0; j < rawData.allBuilds.length; j++) {
     	buildData = rawData.allBuilds[j];
         var cell = table.rows[0].insertCell(-1);
         cell.innerHTML = "<a href='" + buildData.url + "'>" + buildData.displayName + "</a>";
+        if (paramNumBuilds <= 20) {
+               cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + buildData.displayName +" onclick='buildServerColumn(this.parentNode.cellIndex)'><img src='img/letter_s.png' /></a>");
+            }
         switch (buildData.result) {
     			case "SUCCESS":
     				tdclass = "success";
@@ -78,7 +82,7 @@ function main (data){
     				break;
             }
         cell.setAttribute('class',tdclass);    
-        var cell = table.rows[1].insertCell(-1);
+        cell = table.rows[1].insertCell(-1);
         dur = new Date(buildData.duration);
         if (buildData.building) {
             cell.innerHTML = "building";
@@ -93,7 +97,7 @@ function main (data){
             }
         }
         
-        var cell = table.rows[2].insertCell(-1);
+        cell = table.rows[2].insertCell(-1);
         var dateString = new Date(buildData.timestamp).toString().split(" ")[4];
         if (paramNumBuilds <= 25) {
             cell.innerHTML = dateString;
@@ -124,20 +128,24 @@ function main (data){
                 var row = table.insertRow(-1);
                 row.setAttribute('id',jobName);
                 // $("#table").append("<tr id=" + jobName + ">");
-                var cell = row.insertCell(0);
+                cell = row.insertCell(0);
                 cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
                 // $("#table").append("   <td> " + jobName + " </td>");
                 cell = row.insertCell(1);
-                cell.setAttribute('class',tdclass);
-                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
-                // $("#table").append("   <td class='" + tdclass + "'><a href='" + url + "'>" + buildNumber + "</a></td>");
-                // $("#table").append("</tr>");
+                // cell.setAttribute('class',tdclass);
+                // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             } else {
                 var row = document.getElementById(jobName);
-                var cell = row.insertCell(-1);
-                cell.setAttribute('class',tdclass);
-                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
-            }            
+                cell = row.insertCell(-1);
+                // cell.setAttribute('class',tdclass);
+                // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+            }
+            cell.setAttribute('class',tdclass);
+            cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+            
+            if (paramNumBuilds <= 20) {
+               cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this)'><img src='img/letter_s.png' /></a>");
+            }
         }
         for (i = 0; i < table.children.length ; i++) {
             var row = table.children[i];
@@ -150,3 +158,30 @@ function main (data){
 
     }
 };
+
+function buildServerCell(elem) {
+    url = baseUrl + elem.id;
+     $.ajax({
+                    url: url + "api/json?tree=builtOn",
+                    dataType: "json",
+                    beforeSend: function (xhr) {
+                       xhr.setRequestHeader("Authorization", "Basic " + token);
+                    }
+                })
+                .done(function(data) { // console.log("Data: " + data); console.log(data)
+                    var subBuildServerJSON = data;
+                    var subBuildServer = subBuildServerJSON.builtOn;
+                    var subBuildServerNum = subBuildServer.replace("testcomplete","");
+                    elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
+                    elem.innerHTML = subBuildServerNum;
+                    });
+}
+
+function buildServerColumn(col) {
+    var table = document.getElementById('table');
+    //var col = table.rows[0].cells;
+    for (var i=3; i < table.rows.length; i++) {
+        buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0]);
+    }
+    // remove s from top
+}

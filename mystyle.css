@@ -19,3 +19,12 @@ td.ellipsis {
     cursor: pointer;
     text-align: center;
 }
+
+a.buildserverlink {
+    float: right;
+}
+
+a.buildserverlink img {
+    height: 70%;
+    width: 70%;
+}
