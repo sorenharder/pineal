@@ -120,61 +120,81 @@ function main (data){
     				tdclass = "unknown";
     				break;
             }
+            
             var jobName = subBuildData.jobName,
                 url = baseUrl + subBuildData.url + "TestComplete/",
                 buildNumber = subBuildData.buildNumber;
-            //var indexOf;
+            
             if (!document.getElementById(jobName)) {
                 var row = table.insertRow(-1);
                 row.setAttribute('id',jobName);
                 // $("#table").append("<tr id=" + jobName + ">");
                 cell = row.insertCell(0);
                 cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
+                
                 // $("#table").append("   <td> " + jobName + " </td>");
-                cell = row.insertCell(1);
-                // cell.setAttribute('class',tdclass);
-                // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+                if (paramNumBuilds <= 20) {
+                    cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + jobName +" onclick='buildServerRow(this.parentNode.parentNode)'><img src='img/letter_s.png' /></a>");
+                }
+                for(var k = table.childNodes[0].cells.length - 2; k > 0; k--) {
+                    cell = row.insertCell(1);
+                    cell.setAttribute('class',"pending");
+                    cell.innerHTML = "n/a";
+                }
+                cell = row.insertCell(-1);
+                cell.setAttribute('class',tdclass);
+                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             } else {
                 var row = document.getElementById(jobName);
                 cell = row.insertCell(-1);
-                // cell.setAttribute('class',tdclass);
-                // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+                cell.setAttribute('class',tdclass);
+                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             }
-            cell.setAttribute('class',tdclass);
-            cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+            // cell.setAttribute('class',tdclass);
+            // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             
-            if (paramNumBuilds <= 20) {
-               cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this)'><img src='img/letter_s.png' /></a>");
-            }
+            
+            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this)'></a>");
+            
         }
-        for (i = 0; i < table.children.length ; i++) {
-            var row = table.children[i];
+        
+        for (l = 0; l < table.children.length ; l++) {
+            var row = table.children[l];
             if (row.children.length  < table.children[0].children.length) {
-                var cell = row.insertCell(1);
+                cell = row.insertCell(-1);
                 cell.setAttribute('class',"pending");
                 cell.innerHTML = "n/a";
             }
-        }
-
+        }   
     }
 };
 
 function buildServerCell(elem) {
-    url = baseUrl + elem.id;
-     $.ajax({
-                    url: url + "api/json?tree=builtOn",
-                    dataType: "json",
-                    beforeSend: function (xhr) {
-                       xhr.setRequestHeader("Authorization", "Basic " + token);
-                    }
-                })
-                .done(function(data) { // console.log("Data: " + data); console.log(data)
-                    var subBuildServerJSON = data;
-                    var subBuildServer = subBuildServerJSON.builtOn;
-                    var subBuildServerNum = subBuildServer.replace("testcomplete","");
-                    elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
-                    elem.innerHTML = subBuildServerNum;
-                    });
+    if (elem !== undefined) {
+        url = baseUrl + elem.id;
+        
+        $.ajax({
+            url: url + "api/json?tree=builtOn,keepLog",
+            dataType: "json",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Basic " + token);
+            }
+        })
+        .done(function(data) { // console.log("Data: " + data); console.log(data)
+            var subBuildServerJSON = data;
+            var subBuildServer = subBuildServerJSON.builtOn;
+            var subBuildServerNum = subBuildServer.replace("testcomplete","");
+            elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
+            elem.innerHTML = subBuildServerNum;
+            var keeping;
+            if (subBuildServerJSON.keepLog == true) {
+                keeping = "keep";
+            } else {
+                keeping = "not_keep"
+            }
+            elem.parentNode.classList.add(keeping);
+        });
+    }
 }
 
 function buildServerColumn(col) {
@@ -184,4 +204,11 @@ function buildServerColumn(col) {
         buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0]);
     }
     // remove s from top
+}
+
+function buildServerRow(row) {
+    var table = document.getElementById('table');
+    for (var i=1; i < row.cells.length; i++) {
+        buildServerCell(row.cells[i].getElementsByClassName('buildserverlink')[0]);
+    }
 }

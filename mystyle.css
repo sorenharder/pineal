@@ -1,14 +1,34 @@
+table {
+    /* border-collapse: collapse; */
+    border-spacing: 0px;
+}
+td {
+    border: 2px solid white;
+}
 td.fail {
     background-color: red;
+    border: red;
 }
 td.success {
     background-color: green;
+    border: green;
 }
 td.unknown {
     background-color: yellow;
+    border: yellow;
 }
-td.building {
+td.building, td.pending {
     background-color: pink;
+    text-align: center;
+    border: pink;
+}
+
+td.not_keep {
+    border: 1px solid lightgreen; 
+}
+
+td.keep {
+    border: 2px solid black;
 }
 
 input.num {
@@ -27,4 +47,5 @@ a.buildserverlink {
 a.buildserverlink img {
     height: 70%;
     width: 70%;
+    float: right;
 }
