@@ -22,7 +22,7 @@ var //rawRawData
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
     // to get build (master/branch): https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[actions[parameters[*]]]{21,22}&depth=1&pretty
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*]]]{" +
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
     token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";
 
@@ -33,7 +33,7 @@ function reload(url) {
     paramSkip = parseInt(document.getElementById('skip').value,10);
     paramNumBuilds = parseInt(document.getElementById('num_builds',10).value);
     paramNumBuildsTotal = paramSkip +  paramNumBuilds;
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*]]]{" +
                 paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
     get(url);
 }
@@ -58,6 +58,9 @@ function main (data){
     tableRow = table.insertRow(2);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Timestamp";
+    tableRow = table.insertRow(3);
+    tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "Branch";
  
 
     for (var j = 0; j < rawData.allBuilds.length; j++) {
@@ -108,6 +111,49 @@ function main (data){
             cell.title = dateString;
         }
         
+        cell = table.rows[3].insertCell(-1);
+        
+        // find the unique branchString: buildData.actions[x].parameters[x] = {name="BUILD", value=branchString}, default to '<i>default</i>'
+        var branchString = 'noBranch';
+        var actions = buildData.actions;
+        var parameters = [];
+        
+        /*
+         * alternative solution for code below
+        for (var i = 0; i < actions.length; i++) {
+            if (actions[i].parameters) {
+                parameters = actions[i].parameters;
+                break;
+            }
+        }
+         for (var i = 0; i < parameters.length; i++) {
+            if (parameters[i].name === "BUILD") {
+                branchString = parameters[i].value;
+                break;
+            }
+        }
+        */
+        
+        parameters = actions.reduce(function(result, a) {
+            return a.parameters ? a.parameters : result;
+        }, null);
+        
+        branchString = parameters.reduce(function (result, p) {
+            return p.name === "BUILD" ? p.value : result;
+        }, null);
+        
+        if (branchString === ''){
+            branchString = '<i>default</i>' ;
+        }
+        
+        if (paramNumBuilds <= 25) {
+            cell.innerHTML = branchString;
+        } else {
+            cell.innerHTML = '*';
+            cell.className = 'ellipsis';
+            cell.title = branchString;
+        }
+       
     	for (var i = 0; i < buildData.subBuilds.length; i++) {
     		subBuildData = buildData.subBuilds[i];
     		switch (subBuildData.result) {
