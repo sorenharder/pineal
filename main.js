@@ -18,9 +18,10 @@ var //rawRawData
     // rawRawData = $.getJSON('TCexample.json'), //offline
     baseUrl = "https://creatorci.eu.zmags.com/",
     paramSkip = 0,
-    paramNumBuilds = 25,
+    paramNumBuilds = 24,
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
+    // to get build (master/branch): https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[actions[parameters[*]]]{21,22}&depth=1&pretty
     url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{" +
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
     token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";
@@ -63,7 +64,7 @@ function main (data){
     	buildData = rawData.allBuilds[j];
         var cell = table.rows[0].insertCell(-1);
         cell.innerHTML = "<a href='" + buildData.url + "'>" + buildData.displayName + "</a>";
-        if (paramNumBuilds <= 20) {
+        if (paramNumBuilds <= 25) {
                cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + buildData.displayName +" onclick='buildServerColumn(this.parentNode.cellIndex)'><img src='img/letter_s.png' /></a>");
             }
         switch (buildData.result) {
@@ -133,7 +134,7 @@ function main (data){
                 cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
                 
                 // $("#table").append("   <td> " + jobName + " </td>");
-                if (paramNumBuilds <= 20) {
+                if (paramNumBuilds <= 25) {
                     cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + jobName +" onclick='buildServerRow(this.parentNode.parentNode)'><img src='img/letter_s.png' /></a>");
                 }
                 for(var k = table.childNodes[0].cells.length - 2; k > 0; k--) {
