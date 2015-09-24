@@ -22,7 +22,7 @@ var //rawRawData
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
     // to get build (master/branch): https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[actions[parameters[*]]]{21,22}&depth=1&pretty
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*]]]{" +
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
     token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";
 
@@ -33,7 +33,7 @@ function reload(url) {
     paramSkip = parseInt(document.getElementById('skip').value,10);
     paramNumBuilds = parseInt(document.getElementById('num_builds',10).value);
     paramNumBuildsTotal = paramSkip +  paramNumBuilds;
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*]]]{" +
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
                 paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
     get(url);
 }
@@ -61,6 +61,10 @@ function main (data){
     tableRow = table.insertRow(3);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Branch";
+    tableRow = table.insertRow(4);
+    tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "Started by";
+    
  
 
     for (var j = 0; j < rawData.allBuilds.length; j++) {
@@ -143,7 +147,7 @@ function main (data){
         }, null);
         
         if (branchString === ''){
-            branchString = '<i>default</i>' ;
+            branchString = '<i>master</i>' ;
         }
         
         if (paramNumBuilds <= 25) {
@@ -152,6 +156,53 @@ function main (data){
             cell.innerHTML = '*';
             cell.className = 'ellipsis';
             cell.title = branchString;
+        }
+       
+        cell = table.rows[4].insertCell(-1);
+        // find the unique causes: buildData.actions[x].causes[x] = {shortDescription="Started by .*"}
+        /*var causes = buildData.actions.reduce(function (result, c) {
+            if (c.causes) {
+                result.push(c.causes)
+                //code
+            }
+            return c.causes ? result.push(c.causes) : result;
+        }, []); 
+        */
+        
+        var causes = buildData.actions.reduce(function (array, action) {
+            if (action.causes) {
+                array.push(action.causes[0]);
+            }
+            
+            return array;
+        }, []);
+        
+        /*
+        var causes = buildData.actions.filter(function(action){
+            return action.causes; 
+        });
+        */
+        
+        var startedByJSON = causes.find(function (cause) {         
+            return cause.shortDescription && cause.shortDescription.indexOf("Started by") > -1;
+        });
+        
+        if (startedByJSON.shortDescription === "Started by timer") {
+            startedBy = "timer";
+        } else if (startedByJSON.shortDescription.indexOf("Started by user") === 0) {
+            startedBy = startedByJSON.userId;
+        } else if ("Started by upstream project \"mosaik-master-mb\""){
+            startedBy = "<a href=\"" + baseUrl + startedByJSON.upstreamUrl + startedByJSON.upstreamBuild +"\" id='upstream_build'>" + startedByJSON.upstreamBuild + "</a>";
+        } else {
+            startedBy = "???";
+        }
+        
+        if (paramNumBuilds <= 25) {
+            cell.innerHTML = startedBy;
+        } else {
+            cell.innerHTML = '*';
+            cell.className = 'ellipsis';
+            cell.title = startedBy;
         }
        
     	for (var i = 0; i < buildData.subBuilds.length; i++) {
