@@ -2,5 +2,6 @@
 <!-- Komodo Project File - DO NOT EDIT -->
 <project id="0c526269-52b7-4609-8f01-2eb7d3d9fbc1" kpf_version="5" name="pineal.komodoproject">
 <preference-set idref="0c526269-52b7-4609-8f01-2eb7d3d9fbc1" id="project" preftype="project">
+  <long id="prefs_version">1</long>
 </preference-set>
 </project>
