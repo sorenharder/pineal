@@ -14,8 +14,7 @@ function get(url) {
 
 // offline & online
 
-var //rawRawData 
-    // rawRawData = $.getJSON('TCexample.json'), //offline
+var // rawRawData = $.getJSON('TCexample.json'), //offline
     baseUrl = "https://creatorci.eu.zmags.com/",
     paramSkip = 0,
     paramNumBuilds = 24,
@@ -37,6 +36,151 @@ function reload(url) {
                 paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
     get(url);
 }
+    
+var errorH1 = document.createElement("H1");
+errorH1.innerHTML = "Errors";
+var errorTable = document.createElement("table");
+errorTable.setAttribute('id','errortest');
+//var successH1 = document.createElement("H1");
+//successH1.innerHTML = "Successes";
+//var successTable = document.createElement("table");
+//successTable.setAttribute('id','successtest');
+var errorRow;
+
+function review() {
+    var cellNo;
+    var errorCell;
+    var table = document.getElementById('table');
+   
+    var reviewCont = document.getElementById('review');
+    reviewCont.innerHTML = "";
+    errorTable.innerHTML = "";
+    // successTable.innerHTML = "";
+    
+    var reviewArrayChecked = document.querySelectorAll('.review:checked');
+    if (reviewArrayChecked.length > 0) {
+        reviewCont.appendChild(errorH1);
+        reviewCont.appendChild(errorTable);
+        // reviewCont.appendChild(successH1);
+        // reviewCont.appendChild(successTable);
+        
+        var errorHeader = errorTable.createTHead();
+        var errorHRow = errorHeader.insertRow(0);
+        for(i = 0; i < 7; i++) {
+            errorHRow.insertCell(i);
+        }
+        errorHRow.cells[0].innerHTML = "date";
+        errorHRow.cells[1].innerHTML = "starter";
+        errorHRow.cells[2].innerHTML = "startId";
+        errorHRow.cells[3].innerHTML = "multiId";
+        errorHRow.cells[4].innerHTML = "test";
+        errorHRow.cells[5].innerHTML = "testId";
+        errorHRow.cells[6].innerHTML = "server";
+        
+        var errorTableB = document.createElement("tbody");
+        errorTable.appendChild(errorTableB);
+        
+        
+        //reviewCont.innerHTML = "<h1>Error</h1><table id='errortest' /><h1>Success</h1><table  id='successtest' />";
+        for (i = 0; i < reviewArrayChecked.length; i++){
+            
+            var failure = false;
+            for (var j=6; j < table.rows.length; j++) {
+                //errorCell = errorRow.insertCell(0);
+                //errorCell.innerHTML =  reviewArrayChecked[i].value;errorCell = errorRow.insertCell(-1);
+                cellNo = reviewArrayChecked[i].parentNode.cellIndex;
+                cell = table.rows[j].cells[cellNo];
+                if (cell.className == "fail") {
+                    failure = true;
+                    url = baseUrl + cell.lastChild.id;
+                    
+                    var errorRow = errorTableB.insertRow(0);
+                    errorRow.setAttribute("class", "fail");
+                    var errorCell0 = errorRow.insertCell(0);
+                    var errorCell1 = errorRow.insertCell(1);
+                    var errorCell2 = errorRow.insertCell(2);
+                    var errorCell3 = errorRow.insertCell(3);
+                    var errorCell4 = errorRow.insertCell(4);
+                    var errorCell5 = errorRow.insertCell(5);
+                    var errorCell6 = errorRow.insertCell(6);
+                    
+                    getAjaxData(errorRow); 
+                    
+                    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
+                            errorCell1.innerHTML = "SCM";
+                            errorCell2.innerHTML = table.rows[4].cells[cellNo].innerText;
+                    } else {
+                            errorCell1.innerHTML = table.rows[4].cells[cellNo].innerText;
+                            errorCell2.innerHTML = "";
+                    }
+                    
+                    errorCell3.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
+                    
+                    errorCell4.innerHTML = (table.rows[j].id).substring(10);
+                    
+                    errorCell5.innerHTML = table.rows[j].cells[cellNo].innerHTML;
+                    
+                }                
+            }
+            
+            if (!failure) {
+                console.log("do not fail");
+                errorRow = makeErrorRow(errorTableB, table, cellNo);
+                errorRow.setAttribute("class", "success");
+            }
+            failure = false;
+        }
+    }
+    
+}
+
+function makeErrorRow(errorTableB, table, cellNo) {
+    var errorRow = errorTableB.insertRow(0);
+    //errorRow.setAttribute("class", "success");
+    var errorCell0 = errorRow.insertCell(0);
+    var errorCell1 = errorRow.insertCell(1);
+    var errorCell2 = errorRow.insertCell(2);
+    var errorCell3 = errorRow.insertCell(3);
+    var errorCell4 = errorRow.insertCell(4);
+    var errorCell5 = errorRow.insertCell(5);
+    var errorCell6 = errorRow.insertCell(6);
+                
+    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
+        errorCell1.innerHTML = "SCM";
+        errorCell2.innerHTML = table.rows[4].cells[cellNo].innerText;
+    } else {
+        errorCell1.innerHTML = table.rows[4].cells[cellNo].innerText;
+        errorCell2.innerHTML = "";
+    }
+    errorCell3.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
+    errorCell4.innerHTML = "All"
+    errorCell5.innerHTML = ""
+    
+    return errorRow;            
+}
+
+function deferredAjax(data, errorRow) { // console.log("Data: " + data); console.log(data)
+                        var subBuildServerJSON = data;
+                        date = new Date(data.reports[0].details.timestamp);
+                        errorRow.cells[0].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
+                        
+                        errorRow.cells[6].innerHTML = (data.reports[0].agent).replace("testcomplete","");
+                        
+                        errorRow.cells[5].firstChild.setAttribute("href", data.reports[0].url);
+                        errorRow.cells[5].firstChild.setAttribute("target", "_blank");
+}
+function getAjaxData(errorRow) {
+    return  $.ajax({
+                        url: url + "TestComplete/api/json?tree=*,reports[*,details[*]]",
+                        dataType: "json",
+                        row: errorRow,
+                        success: function(data) { deferredAjax(data,this.row) },
+                        beforeSend: function (xhr) {
+                        xhr.setRequestHeader("Authorization", "Basic " + token);
+                        }
+                        
+                    })
+}
 
 function main (data){
     var rawRawData = data;
@@ -48,27 +192,42 @@ function main (data){
     //	    $("#containerRaw").toggle();
     // });
 
+    // set table header
     var table = document.getElementById('table');
     var tableRow = table.insertRow(0);
+    
     var tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "TC Build";
+    
     tableRow = table.insertRow(1);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Duration";
+    
     tableRow = table.insertRow(2);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Timestamp";
+    
     tableRow = table.insertRow(3);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Branch";
+    
     tableRow = table.insertRow(4);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Started by";
     
+    tableRow = table.insertRow(5);
+    tableCell = tableRow.insertCell(0);
+    tableCell.innerHTML = "Review";
+    
+    
  
-
+    // iterate over builds
     for (var j = 0; j < rawData.allBuilds.length; j++) {
     	buildData = rawData.allBuilds[j];
+        
+        ///////////////////////////////////
+        // row 0: build number
+        
         var cell = table.rows[0].insertCell(-1);
         cell.innerHTML = "<a href='" + buildData.url + "'>" + buildData.displayName + "</a>";
         if (paramNumBuilds <= 25) {
@@ -89,7 +248,11 @@ function main (data){
                     }
     				break;
             }
-        cell.setAttribute('class',tdclass);    
+        cell.setAttribute('class',tdclass);
+        
+        ///////////////////////////////////
+        // row 1: duration
+        
         cell = table.rows[1].insertCell(-1);
         dur = new Date(buildData.duration);
         if (buildData.building) {
@@ -105,6 +268,9 @@ function main (data){
             }
         }
         
+        ///////////////////////////////////
+        // row 2: timestamp
+        
         cell = table.rows[2].insertCell(-1);
         var dateString = new Date(buildData.timestamp).toString().split(" ")[4];
         if (paramNumBuilds <= 25) {
@@ -114,6 +280,9 @@ function main (data){
             cell.className = 'ellipsis';
             cell.title = dateString;
         }
+        
+        ///////////////////////////////////
+        // row 3: branch built
         
         cell = table.rows[3].insertCell(-1);
         
@@ -157,7 +326,10 @@ function main (data){
             cell.className = 'ellipsis';
             cell.title = branchString;
         }
-       
+
+        ///////////////////////////////////
+        // row 4: started by
+        
         cell = table.rows[4].insertCell(-1);
         // find the unique causes: buildData.actions[x].causes[x] = {shortDescription="Started by .*"}
         /*var causes = buildData.actions.reduce(function (result, c) {
@@ -204,7 +376,14 @@ function main (data){
             cell.className = 'ellipsis';
             cell.title = startedBy;
         }
-       
+        ///////////////////////////////////
+        // row 5: select for review
+        
+        cell = table.rows[5].insertCell(-1);
+        cell.innerHTML = "<input type='checkbox' name='review' class='review' onclick='review();' value=" + buildData.displayName + ">";
+        
+        ///////////////////////////////////
+        // row n: subtests
     	for (var i = 0; i < buildData.subBuilds.length; i++) {
     		subBuildData = buildData.subBuilds[i];
     		switch (subBuildData.result) {
@@ -298,7 +477,7 @@ function buildServerCell(elem) {
 function buildServerColumn(col) {
     var table = document.getElementById('table');
     //var col = table.rows[0].cells;
-    for (var i=3; i < table.rows.length; i++) {
+    for (var i=6; i < table.rows.length; i++) {
         buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0]);
     }
     // remove s from top
@@ -309,4 +488,5 @@ function buildServerRow(row) {
     for (var i=1; i < row.cells.length; i++) {
         buildServerCell(row.cells[i].getElementsByClassName('buildserverlink')[0]);
     }
+
 }

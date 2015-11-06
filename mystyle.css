@@ -49,3 +49,26 @@ a.buildserverlink img {
     width: 70%;
     float: right;
 }
+
+input.review {
+
+}
+
+table#errortest td {
+    border: 1px solid black;
+}
+table#errortest thead tr td {
+    background-color: grey;
+}
+
+table#errortest tr.fail {
+    background-color: red;
+}
+
+table#errortest tr.success {
+    background-color: green;
+}
+
+table#errortest a {
+    color: #dddddd;
+}
