@@ -66,16 +66,18 @@ function review() {
         
         var errorHeader = errorTable.createTHead();
         var errorHRow = errorHeader.insertRow(0);
-        for(i = 0; i < 7; i++) {
+        for(i = 0; i < 9; i++) {
             errorHRow.insertCell(i);
         }
-        errorHRow.cells[0].innerHTML = "date";
-        errorHRow.cells[1].innerHTML = "starter";
-        errorHRow.cells[2].innerHTML = "startId";
-        errorHRow.cells[3].innerHTML = "multiId";
-        errorHRow.cells[4].innerHTML = "test";
-        errorHRow.cells[5].innerHTML = "testId";
-        errorHRow.cells[6].innerHTML = "server";
+        errorHRow.cells[0].innerHTML = "branch";
+        errorHRow.cells[1].innerHTML = "date";
+        errorHRow.cells[2].innerHTML = "starter";
+        errorHRow.cells[3].innerHTML = "startId";
+        errorHRow.cells[4].innerHTML = "multiId";
+        errorHRow.cells[5].innerHTML = "test";
+        errorHRow.cells[6].innerHTML = "testId";
+        errorHRow.cells[7].innerHTML = "server";
+        errorHRow.cells[8].innerHTML = "toggle";
         
         var errorTableB = document.createElement("tbody");
         errorTable.appendChild(errorTableB);
@@ -90,42 +92,47 @@ function review() {
                 //errorCell.innerHTML =  reviewArrayChecked[i].value;errorCell = errorRow.insertCell(-1);
                 cellNo = reviewArrayChecked[i].parentNode.cellIndex;
                 cell = table.rows[j].cells[cellNo];
-                if (cell.className == "fail") {
+                if (cell.className.includes("fail")) {
                     failure = true;
                     url = baseUrl + cell.lastChild.id;
                     
+                    makeErrorRow(errorTableB, table, cellNo, j);
+                    
+                    /*
                     var errorRow = errorTableB.insertRow(0);
                     errorRow.setAttribute("class", "fail");
-                    var errorCell0 = errorRow.insertCell(0);
-                    var errorCell1 = errorRow.insertCell(1);
-                    var errorCell2 = errorRow.insertCell(2);
-                    var errorCell3 = errorRow.insertCell(3);
-                    var errorCell4 = errorRow.insertCell(4);
-                    var errorCell5 = errorRow.insertCell(5);
-                    var errorCell6 = errorRow.insertCell(6);
-                    
+                    var eCellBuild = errorRow.insertCell(0);
+                    var eCellTime = errorRow.insertCell(1)
+                    var eCellStarter = errorRow.insertCell(2);
+                    var eCellStId = errorRow.insertCell(3);
+                    var eCellMBuild = errorRow.insertCell(4);
+                    var eCellTest = errorRow.insertCell(5);
+                    var eCellTId = errorRow.insertCell(6);
+                    var eCellBServ = errorRow.insertCell(7);
+    
                     getAjaxData(errorRow); 
                     
+                    eCellBuild.innerHTML = "master";                    
                     if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
-                            errorCell1.innerHTML = "SCM";
-                            errorCell2.innerHTML = table.rows[4].cells[cellNo].innerText;
+                            eCellStarter.innerHTML = "SCM";
+                            eCellStId.innerHTML = table.rows[4].cells[cellNo].innerText;
                     } else {
-                            errorCell1.innerHTML = table.rows[4].cells[cellNo].innerText;
-                            errorCell2.innerHTML = "";
+                            eCellStarter.innerHTML = table.rows[4].cells[cellNo].innerText;
+                            eCellStId.innerHTML = "";
                     }
                     
-                    errorCell3.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
+                    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
                     
-                    errorCell4.innerHTML = (table.rows[j].id).substring(10);
+                    eCellTest.innerHTML = (table.rows[j].id).substring(10);
                     
-                    errorCell5.innerHTML = table.rows[j].cells[cellNo].innerHTML;
-                    
+                    eCellTId.innerHTML = table.rows[j].cells[cellNo].innerHTML;
+                    */
                 }                
             }
             
             if (!failure) {
                 console.log("do not fail");
-                errorRow = makeErrorRow(errorTableB, table, cellNo);
+                errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
                 errorRow.setAttribute("class", "success");
             }
             failure = false;
@@ -134,27 +141,61 @@ function review() {
     
 }
 
-function makeErrorRow(errorTableB, table, cellNo) {
-    var errorRow = errorTableB.insertRow(0);
-    //errorRow.setAttribute("class", "success");
-    var errorCell0 = errorRow.insertCell(0);
-    var errorCell1 = errorRow.insertCell(1);
-    var errorCell2 = errorRow.insertCell(2);
-    var errorCell3 = errorRow.insertCell(3);
-    var errorCell4 = errorRow.insertCell(4);
-    var errorCell5 = errorRow.insertCell(5);
-    var errorCell6 = errorRow.insertCell(6);
-                
-    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
-        errorCell1.innerHTML = "SCM";
-        errorCell2.innerHTML = table.rows[4].cells[cellNo].innerText;
+function makeErrorRow(errorTableB, table, cellNo, testId) {
+    var err_b;
+    if (testId == -1) {
+        err_b = false;
     } else {
-        errorCell1.innerHTML = table.rows[4].cells[cellNo].innerText;
-        errorCell2.innerHTML = "";
+        err_b = true;
     }
-    errorCell3.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
-    errorCell4.innerHTML = "All"
-    errorCell5.innerHTML = ""
+    var errorRow = errorTableB.insertRow(0);
+    if (err_b) {
+        errorRow.setAttribute("class", "fail");
+    }
+
+    var eCellBuild = errorRow.insertCell(0);
+    var eCellTime = errorRow.insertCell(1)
+    var eCellStarter = errorRow.insertCell(2);
+    var eCellStId = errorRow.insertCell(3);
+    var eCellMBuild = errorRow.insertCell(4);
+    var eCellTest = errorRow.insertCell(5);
+    var eCellTId = errorRow.insertCell(6);
+    var eCellBServ = errorRow.insertCell(7);
+    var eCellTgl = errorRow.insertCell(8);
+
+    if (err_b) {
+        getAjaxData(errorRow); 
+    }
+                
+    eCellBuild.innerHTML = "master";
+    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
+        eCellStarter.innerHTML = "SCM";
+        eCellStId.innerHTML = table.rows[4].cells[cellNo].innerText;
+    } else {
+        eCellStarter.innerHTML = table.rows[4].cells[cellNo].innerText;
+        eCellStId.innerHTML = "";
+    }
+    
+    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
+
+    if (err_b) {
+        eCellTest.innerHTML = (table.rows[testId].id).substring(10);            
+        eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;
+        //buildServerCell(table.rows[testId].cells[cellNo].childNodes[1]);
+        buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0])
+        var keepImg;
+        var cn = table.rows[testId].cells[cellNo].className;
+        if (cn.includes("not_keep")) {
+            keepImg = "./img/red_plus.png";
+        } else {
+            keepImg = "./img/minus_sign.gif";
+        }
+        eCellTgl.innerHTML = "<img src='"+keepImg+"' />";
+        
+    } else {
+        eCellTest.innerHTML = "All"
+        eCellTId.innerHTML = ""
+    }
     
     return errorRow;            
 }
@@ -162,12 +203,12 @@ function makeErrorRow(errorTableB, table, cellNo) {
 function deferredAjax(data, errorRow) { // console.log("Data: " + data); console.log(data)
                         var subBuildServerJSON = data;
                         date = new Date(data.reports[0].details.timestamp);
-                        errorRow.cells[0].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
+                        errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
                         
-                        errorRow.cells[6].innerHTML = (data.reports[0].agent).replace("testcomplete","");
+                        errorRow.cells[7].innerHTML = (data.reports[0].agent).replace("testcomplete","");
                         
-                        errorRow.cells[5].firstChild.setAttribute("href", data.reports[0].url);
-                        errorRow.cells[5].firstChild.setAttribute("target", "_blank");
+                        errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
+                        errorRow.cells[6].firstChild.setAttribute("target", "_blank");
 }
 function getAjaxData(errorRow) {
     return  $.ajax({
