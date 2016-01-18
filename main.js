@@ -7,6 +7,7 @@ function get(url) {
         dataType: "json",
         beforeSend: function (xhr) {
             xhr.setRequestHeader("Authorization", "Basic " + token);
+            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
         }
     })
     .done(main);
@@ -167,16 +168,16 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
         getAjaxData(errorRow); 
     }
                 
-    eCellBuild.innerHTML = "master";
+    eCellBuild.innerHTML = table.rows[3].cells[cellNo].innerText;
     if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
-        eCellStarter.innerHTML = "SCM";
-        eCellStId.innerHTML = table.rows[4].cells[cellNo].innerText;
+        eCellStarter.innerHTML = "SCM"; //not always right: use https://creatorci.eu.zmags.com/job/mosaik-master-mb/3749/api/json?tree=actions[causes[userId,shortDescription]]&pretty
+        eCellStId.innerHTML = table.rows[4].cells[cellNo].textContent;
     } else {
-        eCellStarter.innerHTML = table.rows[4].cells[cellNo].innerText;
+        eCellStarter.innerHTML = table.rows[4].cells[cellNo].textContent;
         eCellStId.innerHTML = "";
     }
     
-    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
+    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].textContent).substring(1);
 
     if (err_b) {
         eCellTest.innerHTML = (table.rows[testId].id).substring(10);            
@@ -217,7 +218,8 @@ function getAjaxData(errorRow) {
                         row: errorRow,
                         success: function(data) { deferredAjax(data,this.row) },
                         beforeSend: function (xhr) {
-                        xhr.setRequestHeader("Authorization", "Basic " + token);
+                            xhr.setRequestHeader("Authorization", "Basic " + token);
+                            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
                         }
                         
                     })
@@ -299,7 +301,8 @@ function main (data){
         if (buildData.building) {
             cell.innerHTML = "building";
         } else {
-            var durString = dur.getMinutes() + ":" + ("00" + dur.getSeconds()).substr(-2,2) + "." + dur.getMilliseconds()
+            //var durStringMin = dur.getMinutes() + dur.getHours() * 60;
+            var durString = (dur.getHours()+(dur.getTimezoneOffset()/60)) + ":" + ("00" + dur.getMinutes()).substr(-2,2) + ":" + ("00" + dur.getSeconds()).substr(-2,2);
             if (paramNumBuilds <= 25) {
                 cell.innerHTML = durString;
             } else {
@@ -313,13 +316,13 @@ function main (data){
         // row 2: timestamp
         
         cell = table.rows[2].insertCell(-1);
+        cell.title = new Date(buildData.timestamp);
         var dateString = new Date(buildData.timestamp).toString().split(" ")[4];
         if (paramNumBuilds <= 25) {
             cell.innerHTML = dateString;
         } else {
             cell.innerHTML = '*';
             cell.className = 'ellipsis';
-            cell.title = dateString;
         }
         
         ///////////////////////////////////
@@ -357,7 +360,7 @@ function main (data){
         }, null);
         
         if (branchString === ''){
-            branchString = '<i>master</i>' ;
+            branchString = 'Akamai' ;
         }
         
         if (paramNumBuilds <= 25) {
@@ -400,12 +403,14 @@ function main (data){
             return cause.shortDescription && cause.shortDescription.indexOf("Started by") > -1;
         });
         
+        startedByCellTitle = '';
         if (startedByJSON.shortDescription === "Started by timer") {
             startedBy = "timer";
         } else if (startedByJSON.shortDescription.indexOf("Started by user") === 0) {
             startedBy = startedByJSON.userId;
-        } else if ("Started by upstream project \"mosaik-master-mb\""){
+       } else if (startedByJSON.shortDescription.search("Started by upstream project \"mosaik-master-mb\"") == 0){
             startedBy = "<a href=\"" + baseUrl + startedByJSON.upstreamUrl + startedByJSON.upstreamBuild +"\" id='upstream_build'>" + startedByJSON.upstreamBuild + "</a>";
+            startedByCellTitle = startedByJSON.upstreamBuild;
         } else {
             startedBy = "???";
         }
@@ -413,15 +418,22 @@ function main (data){
         if (paramNumBuilds <= 25) {
             cell.innerHTML = startedBy;
         } else {
-            cell.innerHTML = '*';
+            if (startedBy == 'timer') {
+                cell.innerHTML = 'T';
+            } else {
+                cell.innerHTML = startedBy;
+            }
             cell.className = 'ellipsis';
-            cell.title = startedBy;
+            cell.title = (startedByCellTitle != '')?startedByCellTitle:startedBy;
         }
         ///////////////////////////////////
         // row 5: select for review
         
         cell = table.rows[5].insertCell(-1);
         cell.innerHTML = "<input type='checkbox' name='review' class='review' onclick='review();' value=" + buildData.displayName + ">";
+        if (paramNumBuilds > 25){
+            cell.className = 'ellipsis';
+        }
         
         ///////////////////////////////////
         // row n: subtests
@@ -459,15 +471,18 @@ function main (data){
                     cell.setAttribute('class',"pending");
                     cell.innerHTML = "n/a";
                 }
-                cell = row.insertCell(-1);
-                cell.setAttribute('class',tdclass);
-                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+//                cell = row.insertCell(-1);
+//                cell.setAttribute('class',tdclass);
+//                cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
             } else {
                 var row = document.getElementById(jobName);
-                cell = row.insertCell(-1);
-                cell.setAttribute('class',tdclass);
-                cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
+//                cell = row.insertCell(-1);
+//                cell.setAttribute('class',tdclass);
+//                cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
             }
+            cell = row.insertCell(-1);
+            cell.setAttribute('class',tdclass);
+            cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
             // cell.setAttribute('class',tdclass);
             // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             
@@ -496,6 +511,7 @@ function buildServerCell(elem) {
             dataType: "json",
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("Authorization", "Basic " + token);
+                xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
             }
         })
         .done(function(data) { // console.log("Data: " + data); console.log(data)
@@ -503,6 +519,7 @@ function buildServerCell(elem) {
             var subBuildServer = subBuildServerJSON.builtOn;
             var subBuildServerNum = subBuildServer.replace("testcomplete","");
             elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
+            elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
             var keeping;
             if (subBuildServerJSON.keepLog == true) {
