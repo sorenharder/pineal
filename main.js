@@ -168,7 +168,7 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
         getAjaxData(errorRow); 
     }
                 
-    eCellBuild.innerHTML = table.rows[3].cells[cellNo].innerText;
+    eCellBuild.innerHTML = table.rows[3].cells[cellNo].textContent;
     if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
         eCellStarter.innerHTML = "SCM"; //not always right: use https://creatorci.eu.zmags.com/job/mosaik-master-mb/3749/api/json?tree=actions[causes[userId,shortDescription]]&pretty
         eCellStId.innerHTML = table.rows[4].cells[cellNo].textContent;
