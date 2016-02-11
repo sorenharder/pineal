@@ -366,7 +366,7 @@ function main (data){
         if (paramNumBuilds <= 25) {
             cell.innerHTML = branchString;
         } else {
-            cell.innerHTML = '*';
+            cell.innerHTML = (branchString=='Akamai')?'A':'*';
             cell.className = 'ellipsis';
             cell.title = branchString;
         }
@@ -527,6 +527,7 @@ function buildServerCell(elem) {
             } else {
                 keeping = "not_keep"
             }
+            elem.parentNode.classList.remove("keep","not_keep");
             elem.parentNode.classList.add(keeping);
         });
     }
