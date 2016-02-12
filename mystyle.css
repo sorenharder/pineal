@@ -72,3 +72,11 @@ table#errortest tr.success {
 table#errortest a {
     color: #dddddd;
 }
+
+table#errortest td.toggleCell {
+    text-align: center;
+}
+
+table#errortest td.toggleCell img {
+    cursor: pointer;
+}

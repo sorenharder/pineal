@@ -99,35 +99,6 @@ function review() {
                     
                     makeErrorRow(errorTableB, table, cellNo, j);
                     
-                    /*
-                    var errorRow = errorTableB.insertRow(0);
-                    errorRow.setAttribute("class", "fail");
-                    var eCellBuild = errorRow.insertCell(0);
-                    var eCellTime = errorRow.insertCell(1)
-                    var eCellStarter = errorRow.insertCell(2);
-                    var eCellStId = errorRow.insertCell(3);
-                    var eCellMBuild = errorRow.insertCell(4);
-                    var eCellTest = errorRow.insertCell(5);
-                    var eCellTId = errorRow.insertCell(6);
-                    var eCellBServ = errorRow.insertCell(7);
-    
-                    getAjaxData(errorRow); 
-                    
-                    eCellBuild.innerHTML = "master";                    
-                    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
-                            eCellStarter.innerHTML = "SCM";
-                            eCellStId.innerHTML = table.rows[4].cells[cellNo].innerText;
-                    } else {
-                            eCellStarter.innerHTML = table.rows[4].cells[cellNo].innerText;
-                            eCellStId.innerHTML = "";
-                    }
-                    
-                    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].innerText).substring(1);
-                    
-                    eCellTest.innerHTML = (table.rows[j].id).substring(10);
-                    
-                    eCellTId.innerHTML = table.rows[j].cells[cellNo].innerHTML;
-                    */
                 }                
             }
             
@@ -183,21 +154,22 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
         eCellTest.innerHTML = (table.rows[testId].id).substring(10);            
         eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;
         //buildServerCell(table.rows[testId].cells[cellNo].childNodes[1]);
-        buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0])
-        var keepImg;
-        var cn = table.rows[testId].cells[cellNo].className;
-        if (cn.includes("not_keep")) {
-            keepImg = "./img/red_plus.png";
-        } else {
-            keepImg = "./img/minus_sign.gif";
-        }
-        eCellTgl.innerHTML = "<img src='"+keepImg+"' />";
+        buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl)
+        //var keepImg;
+        //var cn = table.rows[testId].cells[cellNo].className;
+        //if (cn.includes("not_keep")) {
+        //    keepImg = "./img/red_plus.png";
+        //} else {
+        //    keepImg = "./img/minus_sign.gif";
+        //}
+        //eCellTgl.innerHTML = "<img src='"+keepImg+"' />";
         
     } else {
         eCellTest.innerHTML = "All"
         eCellTId.innerHTML = ""
     }
     
+    eCellTgl.className = "toggleCell";
     return errorRow;            
 }
 
@@ -487,7 +459,7 @@ function main (data){
             // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             
             
-            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this)'></a>");
+            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");
             
         }
         
@@ -502,7 +474,7 @@ function main (data){
     }
 };
 
-function buildServerCell(elem) {
+function buildServerCell(elem, eCellTgl) {
     if (elem !== undefined) {
         url = baseUrl + elem.id;
         
@@ -529,6 +501,16 @@ function buildServerCell(elem) {
             }
             elem.parentNode.classList.remove("keep","not_keep");
             elem.parentNode.classList.add(keeping);
+            if (eCellTgl != null) {
+                var keepImg;
+                var cn = elem.parentNode.className;
+                if (cn.includes("not_keep")) {
+                    keepImg = "./img/red_plus.png";
+                } else {
+                    keepImg = "./img/minus_sign.gif";
+                }
+                eCellTgl.innerHTML = "<img onclick='toggleLogKeep(\"" + elem.id + "\", " + eCellTgl.parentNode.rowIndex + ")' src='"+keepImg+"' />";
+            }
         });
     }
 }
@@ -537,7 +519,7 @@ function buildServerColumn(col) {
     var table = document.getElementById('table');
     //var col = table.rows[0].cells;
     for (var i=6; i < table.rows.length; i++) {
-        buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0]);
+        buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0], null);
     }
     // remove s from top
 }
@@ -545,7 +527,26 @@ function buildServerColumn(col) {
 function buildServerRow(row) {
     var table = document.getElementById('table');
     for (var i=1; i < row.cells.length; i++) {
-        buildServerCell(row.cells[i].getElementsByClassName('buildserverlink')[0]);
+        buildServerCell(row.cells[i].getElementsByClassName('buildserverlink')[0], null);
     }
 
+}
+
+function toggleLogKeep(elemId, eCellTglRef) {
+    if (elemId !== undefined) {
+        url = baseUrl + elemId;
+        elem = document.getElementById(elemId);
+        eCellTgl = document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0];
+        
+        $.ajax({
+            url: url + "toggleLogKeep",
+            //dataType: "json",
+            //crossDomain: false,
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Basic " + token);
+                xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
+            }
+        });
+        buildServerCell(elem, eCellTgl);
+    }
 }
