@@ -40,6 +40,8 @@ function reload(url) {
     
 var errorH1 = document.createElement("H1");
 errorH1.innerHTML = "Errors";
+var errorP = document.createElement("P");
+errorP.innerHTML = "To use the 'toggle' functionality, you need to be logged in to Jenkins. Use the 'testId' links to get login screen." 
 var errorTable = document.createElement("table");
 errorTable.setAttribute('id','errortest');
 //var successH1 = document.createElement("H1");
@@ -61,6 +63,7 @@ function review() {
     var reviewArrayChecked = document.querySelectorAll('.review:checked');
     if (reviewArrayChecked.length > 0) {
         reviewCont.appendChild(errorH1);
+        reviewCont.appendChild(errorP);
         reviewCont.appendChild(errorTable);
         // reviewCont.appendChild(successH1);
         // reviewCont.appendChild(successTable);
@@ -509,7 +512,7 @@ function buildServerCell(elem, eCellTgl) {
                 } else {
                     keepImg = "./img/minus_sign.gif";
                 }
-                eCellTgl.innerHTML = "<img onclick='toggleLogKeep(\"" + elem.id + "\", " + eCellTgl.parentNode.rowIndex + ")' src='"+keepImg+"' />";
+                eCellTgl.innerHTML = "<img onclick='toggleLogKeep(\"" + elem.id + "\", " + eCellTgl.parentNode.rowIndex + ");' src='"+keepImg+"' />";
             }
         });
     }
@@ -537,16 +540,17 @@ function toggleLogKeep(elemId, eCellTglRef) {
         url = baseUrl + elemId;
         elem = document.getElementById(elemId);
         eCellTgl = document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0];
-        
-        $.ajax({
-            url: url + "toggleLogKeep",
-            //dataType: "json",
-            //crossDomain: false,
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader("Authorization", "Basic " + token);
-                xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
-            }
-        });
+        //var tglState = eCellTgl.childNodes[0].src;
+        //var me= window.self;
+        var wnd = window.open(url + "toggleLogKeep", '_blank'); // ?token=" + token
+        //wnd.alert("Admit it! You don't really want to see this window.");
+        wnd.blur();
+        setTimeout(function(){ wnd.close() }, 50);
         buildServerCell(elem, eCellTgl);
+        //setTimeout(function(){
+        //    if (eCellTgl.childNodes[0].src == tglState) {
+        //        window.alert("Toggle failed. This is most likely because you are not logged in. Try to access Jenkins through testId first. ("+eCellTglRef+")");
+        //    }
+        //}, 7000);
     }
 }
