@@ -492,7 +492,7 @@ function buildServerCell(elem, eCellTgl) {
         .done(function(data) { // console.log("Data: " + data); console.log(data)
             var subBuildServerJSON = data;
             var subBuildServer = subBuildServerJSON.builtOn;
-            var subBuildServerNum = subBuildServer.replace("testcomplete","");
+            var subBuildServerNum = subBuildServer.replace("testcomplete-11.20_","");
             elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
             elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
