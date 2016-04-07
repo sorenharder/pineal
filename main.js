@@ -1,22 +1,6 @@
-// online data
 
-function get(url) {
-    // var out;
-    $.ajax({
-        url: url,
-        dataType: "json",
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader("Authorization", "Basic " + token);
-            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
-        }
-    })
-    .done(main);
-}
 
-// offline & online
-
-var // rawRawData = $.getJSON('TCexample.json'), //offline
-    baseUrl = "https://creatorci.eu.zmags.com/",
+var baseUrl = "https://creatorci.eu.zmags.com/",
     paramSkip = 0,
     paramNumBuilds = 24,
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
@@ -26,190 +10,26 @@ var // rawRawData = $.getJSON('TCexample.json'), //offline
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
     token = "cG9oOjhhYWUwNTc3MTQ4NzI0ZGMwZjBlYTdmNTE3MjU5YzMy";
 
-    get(url);
-    
-function reload(url) {
-    document.getElementById('table').innerHTML = '';
-    paramSkip = parseInt(document.getElementById('skip').value,10);
-    paramNumBuilds = parseInt(document.getElementById('num_builds',10).value);
-    paramNumBuildsTotal = paramSkip +  paramNumBuilds;
-    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
-                paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
-    get(url);
-}
-    
-var errorH1 = document.createElement("H1");
-errorH1.innerHTML = "Errors";
-var errorP = document.createElement("P");
-errorP.innerHTML = "To use the 'toggle' functionality, you need to be logged in to Jenkins. Use the 'testId' links to get login screen." 
-var errorTable = document.createElement("table");
-errorTable.setAttribute('id','errortest');
-//var successH1 = document.createElement("H1");
-//successH1.innerHTML = "Successes";
-//var successTable = document.createElement("table");
-//successTable.setAttribute('id','successtest');
-var errorRow;
+mainAjaxDat(url);
 
-function review() {
-    var cellNo;
-    var errorCell;
-    var table = document.getElementById('table');
-   
-    var reviewCont = document.getElementById('review');
-    reviewCont.innerHTML = "";
-    errorTable.innerHTML = "";
-    // successTable.innerHTML = "";
-    
-    var reviewArrayChecked = document.querySelectorAll('.review:checked');
-    if (reviewArrayChecked.length > 0) {
-        reviewCont.appendChild(errorH1);
-        reviewCont.appendChild(errorP);
-        reviewCont.appendChild(errorTable);
-        // reviewCont.appendChild(successH1);
-        // reviewCont.appendChild(successTable);
-        
-        var errorHeader = errorTable.createTHead();
-        var errorHRow = errorHeader.insertRow(0);
-        for(i = 0; i < 9; i++) {
-            errorHRow.insertCell(i);
+// main table BEGIN
+// mainAjaxDat(url).mainAjaxDef(main) renders the main table
+
+function mainAjaxDat(url) {
+    // var out;
+    $.ajax({
+        url: url,
+        dataType: "json",
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader("Authorization", "Basic " + token);
+            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
         }
-        errorHRow.cells[0].innerHTML = "branch";
-        errorHRow.cells[1].innerHTML = "date";
-        errorHRow.cells[2].innerHTML = "starter";
-        errorHRow.cells[3].innerHTML = "startId";
-        errorHRow.cells[4].innerHTML = "multiId";
-        errorHRow.cells[5].innerHTML = "test";
-        errorHRow.cells[6].innerHTML = "testId";
-        errorHRow.cells[7].innerHTML = "server";
-        errorHRow.cells[8].innerHTML = "toggle";
-        
-        var errorTableB = document.createElement("tbody");
-        errorTable.appendChild(errorTableB);
-        
-        
-        //reviewCont.innerHTML = "<h1>Error</h1><table id='errortest' /><h1>Success</h1><table  id='successtest' />";
-        for (i = 0; i < reviewArrayChecked.length; i++){
-            
-            var failure = false;
-            for (var j=6; j < table.rows.length; j++) {
-                //errorCell = errorRow.insertCell(0);
-                //errorCell.innerHTML =  reviewArrayChecked[i].value;errorCell = errorRow.insertCell(-1);
-                cellNo = reviewArrayChecked[i].parentNode.cellIndex;
-                cell = table.rows[j].cells[cellNo];
-                if (cell.className.includes("fail")) {
-                    failure = true;
-                    url = baseUrl + cell.lastChild.id;
-                    
-                    makeErrorRow(errorTableB, table, cellNo, j);
-                    
-                }                
-            }
-            
-            if (!failure) {
-                console.log("do not fail");
-                errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
-                errorRow.setAttribute("class", "success");
-            }
-            failure = false;
-        }
-    }
-    
+    })
+    .done(mainAjaxDef);
 }
 
-function makeErrorRow(errorTableB, table, cellNo, testId) {
-    var err_b;
-    if (testId == -1) {
-        err_b = false;
-    } else {
-        err_b = true;
-    }
-    var errorRow = errorTableB.insertRow(0);
-    if (err_b) {
-        errorRow.setAttribute("class", "fail");
-    }
-
-    var eCellBuild = errorRow.insertCell(0);
-    var eCellTime = errorRow.insertCell(1)
-    var eCellStarter = errorRow.insertCell(2);
-    var eCellStId = errorRow.insertCell(3);
-    var eCellMBuild = errorRow.insertCell(4);
-    var eCellTest = errorRow.insertCell(5);
-    var eCellTId = errorRow.insertCell(6);
-    var eCellBServ = errorRow.insertCell(7);
-    var eCellTgl = errorRow.insertCell(8);
-
-    if (err_b) {
-        getAjaxData(errorRow); 
-    }
-                
-    eCellBuild.innerHTML = table.rows[3].cells[cellNo].textContent;
-    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
-        eCellStarter.innerHTML = "SCM"; //not always right: use https://creatorci.eu.zmags.com/job/mosaik-master-mb/3749/api/json?tree=actions[causes[userId,shortDescription]]&pretty
-        eCellStId.innerHTML = table.rows[4].cells[cellNo].textContent;
-    } else {
-        eCellStarter.innerHTML = table.rows[4].cells[cellNo].textContent;
-        eCellStId.innerHTML = "";
-    }
+function mainAjaxDef (data){
     
-    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].textContent).substring(1);
-
-    if (err_b) {
-        eCellTest.innerHTML = (table.rows[testId].id).substring(10);            
-        eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;
-        //buildServerCell(table.rows[testId].cells[cellNo].childNodes[1]);
-        buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl)
-        //var keepImg;
-        //var cn = table.rows[testId].cells[cellNo].className;
-        //if (cn.includes("not_keep")) {
-        //    keepImg = "./img/red_plus.png";
-        //} else {
-        //    keepImg = "./img/minus_sign.gif";
-        //}
-        //eCellTgl.innerHTML = "<img src='"+keepImg+"' />";
-        
-    } else {
-        eCellTest.innerHTML = "All"
-        eCellTId.innerHTML = ""
-    }
-    
-    eCellTgl.className = "toggleCell";
-    return errorRow;            
-}
-
-function deferredAjax(data, errorRow) { // console.log("Data: " + data); console.log(data)
-                        var subBuildServerJSON = data;
-                        date = new Date(data.reports[0].details.timestamp);
-                        errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
-                        
-                        errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
-                        
-                        errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
-                        errorRow.cells[6].firstChild.setAttribute("target", "_blank");
-}
-function getAjaxData(errorRow) {
-    return  $.ajax({
-                        url: url + "TestComplete/api/json?tree=*,reports[*,details[*]]",
-                        dataType: "json",
-                        row: errorRow,
-                        success: function(data) { deferredAjax(data,this.row) },
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader("Authorization", "Basic " + token);
-                            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
-                        }
-                        
-                    })
-}
-
-function main (data){
-    var rawRawData = data;
-    var rawData = rawRawData;
-    
-    // API output for debug (also code in index.html)
-    // $("#containerRaw").text(JSON.stringify(rawData, null, 4));
-    // $("#buttonRaw").click(function() {
-    //	    $("#containerRaw").toggle();
-    // });
-
     // set table header
     var table = document.getElementById('table');
     var tableRow = table.insertRow(0);
@@ -240,8 +60,8 @@ function main (data){
     
  
     // iterate over builds
-    for (var j = 0; j < rawData.allBuilds.length; j++) {
-    	buildData = rawData.allBuilds[j];
+    for (var j = 0; j < data.allBuilds.length; j++) {
+    	buildData = data.allBuilds[j];
         
         ///////////////////////////////////
         // row 0: build number
@@ -276,7 +96,6 @@ function main (data){
         if (buildData.building) {
             cell.innerHTML = "building";
         } else {
-            //var durStringMin = dur.getMinutes() + dur.getHours() * 60;
             var durString = (dur.getHours()+(dur.getTimezoneOffset()/60)) + ":" + ("00" + dur.getMinutes()).substr(-2,2) + ":" + ("00" + dur.getSeconds()).substr(-2,2);
             if (paramNumBuilds <= 25) {
                 cell.innerHTML = durString;
@@ -350,8 +169,12 @@ function main (data){
         // row 4: started by
         
         cell = table.rows[4].insertCell(-1);
+        
         // find the unique causes: buildData.actions[x].causes[x] = {shortDescription="Started by .*"}
-        /*var causes = buildData.actions.reduce(function (result, c) {
+        
+        /*
+         * alternative solution for code below
+            var causes = buildData.actions.reduce(function (result, c) {
             if (c.causes) {
                 result.push(c.causes)
                 //code
@@ -367,13 +190,6 @@ function main (data){
             
             return array;
         }, []);
-        
-        /*
-        var causes = buildData.actions.filter(function(action){
-            return action.causes; 
-        });
-        */
-        
         
         var startedByJSON = causes.find(function (cause) {         
             return cause.shortDescription && cause.shortDescription.indexOf("Started by") > -1;
@@ -401,6 +217,7 @@ function main (data){
             }
             cell.className = 'ellipsis';
         }
+        
         //cell.title = (cell.title != '')?cell.title:startedBy;
         cell.title = startedBy; // overwritten by getVersionId ajax
         
@@ -433,42 +250,39 @@ function main (data){
                 url = baseUrl + subBuildData.url + "TestComplete/",
                 buildNumber = subBuildData.buildNumber;
             
+            // test introduced to table when found first time
             if (!document.getElementById(jobName)) {
+                
+                // $("#table").append("<tr id=" + jobName + ">");
                 var row = table.insertRow(-1);
                 row.setAttribute('id',jobName);
-                // $("#table").append("<tr id=" + jobName + ">");
+                
+                // $("#table").append("   <td> " + jobName (+ buildserverlink) + " </td>");
                 cell = row.insertCell(0);
                 cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
-                
-                // $("#table").append("   <td> " + jobName + " </td>");
                 if (paramNumBuilds <= 25) {
                     cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + jobName +" onclick='buildServerRow(this.parentNode.parentNode)'><img src='img/letter_s.png' /></a>");
                 }
+                
+                // pad empty cells to the left
                 for(var k = table.childNodes[0].cells.length - 2; k > 0; k--) {
                     cell = row.insertCell(1);
                     cell.setAttribute('class',"pending");
                     cell.innerHTML = "n/a";
                 }
-//                cell = row.insertCell(-1);
-//                cell.setAttribute('class',tdclass);
-//                cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
             } else {
                 var row = document.getElementById(jobName);
-//                cell = row.insertCell(-1);
-//                cell.setAttribute('class',tdclass);
-//                cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
             }
+            
             cell = row.insertCell(-1);
             cell.setAttribute('class',tdclass);
             cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
-            // cell.setAttribute('class',tdclass);
-            // cell.innerHTML = "<a href='" + url + "'>" + buildNumber + "</a>";
             
-            
-            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");
-            
+            // 0-sized link function            
+            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");     
         }
         
+        // pad to the right (just this one row)
         for (l = 0; l < table.children.length ; l++) {
             var row = table.children[l];
             if (row.children.length  < table.children[0].children.length) {
@@ -479,6 +293,175 @@ function main (data){
         }   
     }
 };
+
+// reload called from html: reloads main table with skip settings
+
+function reload(url) {
+    document.getElementById('table').innerHTML = '';
+    paramSkip = parseInt(document.getElementById('skip').value,10);
+    paramNumBuilds = parseInt(document.getElementById('num_builds',10).value);
+    paramNumBuildsTotal = paramSkip +  paramNumBuilds;
+    url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
+                paramSkip + "," + paramNumBuildsTotal + "}&depth=1",
+    mainAjaxDat(url);
+    document.getElementById('review').innerHTML = ""; // clear error table
+}
+
+// main table END
+
+// errors table BEGIN
+    
+var errorH1 = document.createElement("H1");
+errorH1.innerHTML = "Errors";
+
+var errorP = document.createElement("P");
+errorP.innerHTML = "To use the 'toggle' functionality, you need to be logged in to Jenkins. Use the 'testId' links to get login screen." 
+
+var errorTable = document.createElement("table");
+errorTable.setAttribute('id','errortest');
+
+var errorRow;
+
+// error table main function BEGIN
+// review() triggered by clicking checkbox, recurses makeErrorRow() which uses errorsAjaxDat().done(errorsAjaxDef()) to get data
+
+function review() {
+    var cellNo,
+        errorCell,
+        table = document.getElementById('table'); // main table
+   
+    var reviewCont = document.getElementById('review');
+    reviewCont.innerHTML = "";  // error main div
+    errorTable.innerHTML = "";  // table in div
+    
+    var reviewArrayChecked = document.querySelectorAll('.review:checked');
+    if (reviewArrayChecked.length > 0) {
+        
+        // set up div/table: reviewCont.innerHTML = "<h1>Error</h1><table id='errortest' />";
+        reviewCont.appendChild(errorH1);
+        reviewCont.appendChild(errorP);
+        reviewCont.appendChild(errorTable);
+        
+        var errorHeader = errorTable.createTHead();
+        var errorHRow = errorHeader.insertRow(0);
+        for(i = 0; i < 9; i++) {
+            errorHRow.insertCell(i);
+        }
+        errorHRow.cells[0].innerHTML = "branch";
+        errorHRow.cells[1].innerHTML = "date";
+        errorHRow.cells[2].innerHTML = "starter";
+        errorHRow.cells[3].innerHTML = "startId";
+        errorHRow.cells[4].innerHTML = "multiId";
+        errorHRow.cells[5].innerHTML = "test";
+        errorHRow.cells[6].innerHTML = "testId";
+        errorHRow.cells[7].innerHTML = "server";
+        errorHRow.cells[8].innerHTML = "toggle";
+        
+        var errorTableB = document.createElement("tbody");
+        errorTable.appendChild(errorTableB);
+        
+        // iterate over tick-selected builds
+        for (i = 0; i < reviewArrayChecked.length; i++){
+            
+            var failure = false;
+            // iterate over tests (in selected builds) 
+            for (var j=6; j < table.rows.length; j++) {
+                cellNo = reviewArrayChecked[i].parentNode.cellIndex;
+                cell = table.rows[j].cells[cellNo];
+                if (cell.className.includes("fail")) {
+                    failure = true;
+                    url = baseUrl + cell.lastChild.id;
+ 
+                    makeErrorRow(errorTableB, table, cellNo, j);
+                    
+                }                
+            }
+            
+            if (!failure) { //TO DO : third state, yellow? not run, not complete etc
+                errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
+                errorRow.setAttribute("class", "success");
+            }
+            //failure = false;
+        }
+    }
+    
+}
+
+function makeErrorRow(errorTableB, table, cellNo, testId) {
+    
+    var errorRow = errorTableB.insertRow(0);
+    
+    var eCellBuild = errorRow.insertCell(0);
+    var eCellTime = errorRow.insertCell(1)
+    var eCellStarter = errorRow.insertCell(2);
+    var eCellStId = errorRow.insertCell(3);
+    var eCellMBuild = errorRow.insertCell(4);
+    var eCellTest = errorRow.insertCell(5);
+    var eCellTId = errorRow.insertCell(6);
+    var eCellBServ = errorRow.insertCell(7);
+    var eCellTgl = errorRow.insertCell(8);
+    
+    if (testId != -1) {   // red test, not green build
+        errorRow.setAttribute("class", "fail");
+        errorsAjaxDat(errorRow); 
+    }
+    
+    // cell 0: branch name              
+    eCellBuild.innerHTML = table.rows[3].cells[cellNo].textContent;
+    
+    // cell 2+3: starter/id
+    if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
+        eCellStarter.innerHTML = "SCM"; //not always right: use https://creatorci.eu.zmags.com/job/mosaik-master-mb/3749/api/json?tree=actions[causes[userId,shortDescription]]&pretty
+        eCellStId.innerHTML = table.rows[4].cells[cellNo].textContent;
+    } else {
+        eCellStarter.innerHTML = table.rows[4].cells[cellNo].textContent;
+        eCellStId.innerHTML = "";
+    }
+    
+    // cell 4: test-master-id#
+    eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].textContent).substring(1);
+
+    // cell 5-8: failed test info (or 'All')
+    if (testId != -1) {   // red test row
+        eCellTest.innerHTML = (table.rows[testId].id).substring(10);                                                // cell 5: testname; strip TC_Editor/TC_Viewer   
+        eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;                              // cell 6: subtest-id#
+        buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl)    // cell 7-8: build-server + toggle
+    } else {               // green build row
+        eCellTest.innerHTML = "All"
+        eCellTId.innerHTML = ""
+    }
+    
+    eCellTgl.className = "toggleCell";
+    return errorRow;            
+}
+
+function errorsAjaxDat(errorRow) {
+    return  $.ajax({
+                        url: url + "TestComplete/api/json?tree=*,reports[*,details[*]]",
+                        dataType: "json",
+                        row: errorRow,
+                        success: function(data) { errorsAjaxDef(data,this.row) },
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("Authorization", "Basic " + token);
+                            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
+                        }
+                        
+                    })
+}
+function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); console.log(data)
+                        var subBuildServerJSON = data;
+                        date = new Date(data.reports[0].details.timestamp);
+                        errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
+                        
+                        errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
+                        
+                        errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
+                        errorRow.cells[6].firstChild.setAttribute("target", "_blank");
+}
+
+// error table main function END
+
+// utilities BEGIN
 
 // getVersionId: find the test mosaik-master-functionaltest's sister mosaik-master-deploy (in master build) and parse versionId from consoleText
 
@@ -522,7 +505,7 @@ function getVersionIdFromDeployBuild(cell, deployBuild) {
     })
 }
 
-// cleanBuildServerNum: strips name of test build server of everything but the number, partly 
+// cleanBuildServerNum: strips name of test build server of everything but the number, partly known server names, with general default
 
 function cleanBuildServerNum(subBuildServerNum) {
     subBuildServerNum = subBuildServerNum.replace("testcomplete-11.20_","M");  // Minsky's servers -- remove after a while
@@ -531,6 +514,9 @@ function cleanBuildServerNum(subBuildServerNum) {
     subBuildServerNum = subBuildServerNum.replace(/^.{1,}([12345])$/,"?$1");      
     return subBuildServerNum
 }
+
+// buildServerCell(): buildServerColumn()/Row() iterates over cells (buildServerCell())
+// if eCellTgl is not null, it is called from error table function, otherwise from main table function: renders info in both
 
 function buildServerCell(elem, eCellTgl) {
     if (elem !== undefined) {
@@ -552,6 +538,8 @@ function buildServerCell(elem, eCellTgl) {
             elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/' + subBuildServer + '/');
             elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
+            
+            // is built being kept
             var keeping;
             if (subBuildServerJSON.keepLog == true) {
                 keeping = "keep";
@@ -576,11 +564,9 @@ function buildServerCell(elem, eCellTgl) {
 
 function buildServerColumn(col) {
     var table = document.getElementById('table');
-    //var col = table.rows[0].cells;
     for (var i=6; i < table.rows.length; i++) {
         buildServerCell(table.rows[i].cells[col].getElementsByClassName('buildserverlink')[0], null);
     }
-    // remove s from top
 }
 
 function buildServerRow(row) {
@@ -591,22 +577,17 @@ function buildServerRow(row) {
 
 }
 
+// toggleLogKeep(): set 'Keep this forever' in Jenkins
 function toggleLogKeep(elemId, eCellTglRef) {
     if (elemId !== undefined) {
         url = baseUrl + elemId;
         elem = document.getElementById(elemId);
         eCellTgl = document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0];
-        //var tglState = eCellTgl.childNodes[0].src;
-        //var me= window.self;
-        var wnd = window.open(url + "toggleLogKeep", '_blank'); // ?token=" + token
-        //wnd.alert("Admit it! You don't really want to see this window.");
+        var wnd = window.open(url + "toggleLogKeep", '_blank'); 
         wnd.blur();
         setTimeout(function(){ wnd.close() }, 50);
         buildServerCell(elem, eCellTgl);
-        //setTimeout(function(){
-        //    if (eCellTgl.childNodes[0].src == tglState) {
-        //        window.alert("Toggle failed. This is most likely because you are not logged in. Try to access Jenkins through testId first. ("+eCellTglRef+")");
-        //    }
-        //}, 7000);
     }
 }
+
+// utilities END
