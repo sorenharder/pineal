@@ -181,7 +181,7 @@ function deferredAjax(data, errorRow) { // console.log("Data: " + data); console
                         date = new Date(data.reports[0].details.timestamp);
                         errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
                         
-                        errorRow.cells[7].innerHTML = (data.reports[0].agent).replace("testcomplete","");
+                        errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
                         
                         errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
                         errorRow.cells[6].firstChild.setAttribute("target", "_blank");
@@ -374,6 +374,7 @@ function main (data){
         });
         */
         
+        
         var startedByJSON = causes.find(function (cause) {         
             return cause.shortDescription && cause.shortDescription.indexOf("Started by") > -1;
         });
@@ -385,7 +386,7 @@ function main (data){
             startedBy = startedByJSON.userId;
        } else if (startedByJSON.shortDescription.search("Started by upstream project \"mosaik-master-mb\"") == 0){
             startedBy = "<a href=\"" + baseUrl + startedByJSON.upstreamUrl + startedByJSON.upstreamBuild +"\" id='upstream_build'>" + startedByJSON.upstreamBuild + "</a>";
-            startedByCellTitle = startedByJSON.upstreamBuild;
+            getVersionId(cell, startedByJSON.upstreamUrl + startedByJSON.upstreamBuild);
         } else {
             startedBy = "???";
         }
@@ -399,8 +400,10 @@ function main (data){
                 cell.innerHTML = startedBy;
             }
             cell.className = 'ellipsis';
-            cell.title = (startedByCellTitle != '')?startedByCellTitle:startedBy;
         }
+        //cell.title = (cell.title != '')?cell.title:startedBy;
+        cell.title = startedBy; // overwritten by getVersionId ajax
+        
         ///////////////////////////////////
         // row 5: select for review
         
@@ -477,6 +480,58 @@ function main (data){
     }
 };
 
+// getVersionId: find the test mosaik-master-functionaltest's sister mosaik-master-deploy (in master build) and parse versionId from consoleText
+
+function getVersionId(cell, masterBuild) {
+    $.ajax({
+        url: baseUrl + masterBuild + "/api/json?tree=subBuilds[*]&depth=1",
+        dataType: "json",
+        beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Basic " + token);
+                xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
+        }
+    })
+    .done(function(data) {
+        var subBuilds = data.subBuilds;
+        var subBuildUrl;
+        for(i=0;i<subBuilds.length;i++) {
+            if (subBuilds[i].url.indexOf("mosaik-master-deploy") != -1) {
+                subBuildUrl = subBuilds[i].url;
+                break;
+            }            
+        }
+        getVersionIdFromDeployBuild(cell, subBuildUrl);
+    })
+}
+
+function getVersionIdFromDeployBuild(cell, deployBuild) {
+    $.ajax({
+        url: baseUrl + deployBuild + "consoleText",
+        dataType: "text",
+        beforeSend: function (xhr) {
+                xhr.setRequestHeader("Authorization", "Basic " + token);
+                xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
+        }
+    })
+    .done(function(data) {
+        var searchStringRE = /\n\/var\/lib\/jenkins\/workspace\/mosaik-master-deploy\/experience-client\/target\/dist\/js\/editor-main\.(.*)\.js\n/
+        match = searchStringRE.exec(data)[1];
+        //console.log(url);
+        //console.log(match);
+        cell.title = match;
+    })
+}
+
+// cleanBuildServerNum: strips name of test build server of everything but the number, partly 
+
+function cleanBuildServerNum(subBuildServerNum) {
+    subBuildServerNum = subBuildServerNum.replace("testcomplete-11.20_","M");  // Minsky's servers -- remove after a while
+    subBuildServerNum = subBuildServerNum.replace("testcomplete","TC");
+    subBuildServerNum = subBuildServerNum.replace("TestComplete","");         // Firas'/Pavels servers
+    subBuildServerNum = subBuildServerNum.replace(/^.{1,}([12345])$/,"?$1");      
+    return subBuildServerNum
+}
+
 function buildServerCell(elem, eCellTgl) {
     if (elem !== undefined) {
         url = baseUrl + elem.id;
@@ -492,8 +547,9 @@ function buildServerCell(elem, eCellTgl) {
         .done(function(data) { // console.log("Data: " + data); console.log(data)
             var subBuildServerJSON = data;
             var subBuildServer = subBuildServerJSON.builtOn;
-            var subBuildServerNum = subBuildServer.replace("testcomplete-11.20_","");
-            elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/testcomplete' + subBuildServerNum + '/');
+            var subBuildServerNum = cleanBuildServerNum(subBuildServer);
+            
+            elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/' + subBuildServer + '/');
             elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
             var keeping;
