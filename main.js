@@ -67,7 +67,7 @@ function mainAjaxDef (data){
         // row 0: build number
         
         var cell = table.rows[0].insertCell(-1);
-        cell.innerHTML = "<a href='" + buildData.url + "'>" + buildData.displayName + "</a>";
+        cell.innerHTML = "<a href='" + buildData.url + "' target='_blank'>" + buildData.displayName + "</a>";
         if (paramNumBuilds <= 25) {
                cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + buildData.displayName +" onclick='buildServerColumn(this.parentNode.cellIndex)'><img src='img/letter_s.png' /></a>");
             }
@@ -201,7 +201,7 @@ function mainAjaxDef (data){
         } else if (startedByJSON.shortDescription.indexOf("Started by user") === 0) {
             startedBy = startedByJSON.userId;
        } else if (startedByJSON.shortDescription.search("Started by upstream project \"mosaik-master-mb\"") == 0){
-            startedBy = "<a href=\"" + baseUrl + startedByJSON.upstreamUrl + startedByJSON.upstreamBuild +"\" id='upstream_build'>" + startedByJSON.upstreamBuild + "</a>";
+            startedBy = "<a href=\"" + baseUrl + startedByJSON.upstreamUrl + startedByJSON.upstreamBuild +"\" id='upstream_build' target='_blank'>" + startedByJSON.upstreamBuild + "</a>";
             getVersionId(cell, startedByJSON.upstreamUrl + startedByJSON.upstreamBuild);
         } else {
             startedBy = "???";
@@ -368,7 +368,7 @@ function review() {
             for (var j=6; j < table.rows.length; j++) {
                 cellNo = reviewArrayChecked[i].parentNode.cellIndex;
                 cell = table.rows[j].cells[cellNo];
-                if (cell.className.includes("fail")) {
+                if (cell.className.includes("fail")) { //  TODO: || cell.className.includes("unknown") but fix colour and timestamp
                     failure = true;
                     url = baseUrl + cell.lastChild.id;
  
@@ -377,9 +377,9 @@ function review() {
                 }                
             }
             
-            if (!failure) { //TO DO : third state, yellow? not run, not complete etc
+            if (!failure) { 
+                url = baseUrl + "/job/mosaik-master-functionaltests/" + (table.rows[0].cells[cellNo].textContent).substring(1) + "/"; //+ "1728/"  // WIP
                 errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
-                errorRow.setAttribute("class", "success");
             }
             //failure = false;
         }
@@ -402,8 +402,18 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
     var eCellTgl = errorRow.insertCell(8);
     
     if (testId != -1) {   // red test, not green build
-        errorRow.setAttribute("class", "fail");
+        errorRow.classList.add("fail");
+        //errorRow.setAttribute("class", "fail");
         errorsAjaxDat(errorRow); 
+    } else {   // WORK-IN-PROGRESS CODE: "open wound", do not release!!
+        date = new Date(table.rows[2].cells[cellNo].title);
+        eCellTime.innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
+        //successAjaxDat(errorRow);
+        if (table.rows[0].cells[cellNo].classList.contains('unknown')) {
+            errorRow.classList.add("unknown");
+        } else {
+            errorRow.classList.add("success");
+        }
     }
     
     // cell 0: branch name              
@@ -451,6 +461,7 @@ function errorsAjaxDat(errorRow) {
 function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); console.log(data)
                         var subBuildServerJSON = data;
                         date = new Date(data.reports[0].details.timestamp);
+                        date.setHours(date.getHours() -2); // 2h error in timestamp
                         errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
                         
                         errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
@@ -458,7 +469,29 @@ function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); consol
                         errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
                         errorRow.cells[6].firstChild.setAttribute("target", "_blank");
 }
-
+function successAjaxDat(errorRow) {
+    return  $.ajax({
+                        url: url + "api/json?tree=building,timestamp",
+                        dataType: "json",
+                        row: errorRow,
+                        success: function(data) { successAjaxDef(data,this.row) },
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader("Authorization", "Basic " + token);
+                            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
+                        }
+                        
+                    })
+}
+function successAjaxDef(data, successRow) { // console.log("Data: " + data); console.log(data)
+                        var buildServerJSON = data;
+                        date = new Date(data.timestamp);
+                        successRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
+                        
+                        //errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
+                        
+                        //errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
+                        //errorRow.cells[6].firstChild.setAttribute("target", "_blank");
+}
 // error table main function END
 
 // utilities BEGIN
@@ -511,7 +544,7 @@ function cleanBuildServerNum(subBuildServerNum) {
     subBuildServerNum = subBuildServerNum.replace("testcomplete-11.20_","M");  // Minsky's servers -- remove after a while
     subBuildServerNum = subBuildServerNum.replace("testcomplete","TC");
     subBuildServerNum = subBuildServerNum.replace("TestComplete","");         // Firas'/Pavels servers
-    subBuildServerNum = subBuildServerNum.replace(/^.{1,}([12345])$/,"?$1");      
+    subBuildServerNum = subBuildServerNum.replace(/^.{3,}([12345])$/,"?$1");      
     return subBuildServerNum
 }
 
