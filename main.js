@@ -5,6 +5,7 @@ var baseUrl = "https://creatorci.eu.zmags.com/",
     paramNumBuilds = 24,
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
+    
     // to get build (master/branch): https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[actions[parameters[*]]]{21,22}&depth=1&pretty
     url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
@@ -282,7 +283,7 @@ function mainAjaxDef (data){
             cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");     
         }
         
-        // pad to the right (just this one row)
+        // pad to the right (just this one column)
         for (l = 0; l < table.children.length ; l++) {
             var row = table.children[l];
             if (row.children.length  < table.children[0].children.length) {
@@ -378,7 +379,7 @@ function review() {
             }
             
             if (!failure) { 
-                url = baseUrl + "/job/mosaik-master-functionaltests/" + (table.rows[0].cells[cellNo].textContent).substring(1) + "/"; //+ "1728/"  // WIP
+                url = baseUrl + "/job/mosaik-master-functionaltests/" + (table.rows[0].cells[cellNo].textContent).substring(1) + "/"; 
                 errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
             }
             //failure = false;
@@ -401,14 +402,12 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
     var eCellBServ = errorRow.insertCell(7);
     var eCellTgl = errorRow.insertCell(8);
     
-    if (testId != -1) {   // red test, not green build
-        errorRow.classList.add("fail");
-        //errorRow.setAttribute("class", "fail");
+    if (testId != -1) {                  // red test
+        //errorRow.classList.add("fail");
         errorsAjaxDat(errorRow); 
-    } else {   // WORK-IN-PROGRESS CODE: "open wound", do not release!!
+    } else {                            // green builds
         date = new Date(table.rows[2].cells[cellNo].title);
         eCellTime.innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
-        //successAjaxDat(errorRow);
         if (table.rows[0].cells[cellNo].classList.contains('unknown')) {
             errorRow.classList.add("unknown");
         } else {
@@ -460,37 +459,15 @@ function errorsAjaxDat(errorRow) {
 }
 function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); console.log(data)
                         var subBuildServerJSON = data;
+                        errorRow.classList.add("fail");
                         date = new Date(data.reports[0].details.timestamp);
-                        date.setHours(date.getHours() -2); // 2h error in timestamp
+                        date.setHours(date.getHours() -2); // 2h error in timestamp (error in Jenkins/TE integration)
                         errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
                         
                         errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
                         
                         errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
                         errorRow.cells[6].firstChild.setAttribute("target", "_blank");
-}
-function successAjaxDat(errorRow) {
-    return  $.ajax({
-                        url: url + "api/json?tree=building,timestamp",
-                        dataType: "json",
-                        row: errorRow,
-                        success: function(data) { successAjaxDef(data,this.row) },
-                        beforeSend: function (xhr) {
-                            xhr.setRequestHeader("Authorization", "Basic " + token);
-                            xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
-                        }
-                        
-                    })
-}
-function successAjaxDef(data, successRow) { // console.log("Data: " + data); console.log(data)
-                        var buildServerJSON = data;
-                        date = new Date(data.timestamp);
-                        successRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
-                        
-                        //errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
-                        
-                        //errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
-                        //errorRow.cells[6].firstChild.setAttribute("target", "_blank");
 }
 // error table main function END
 
@@ -532,8 +509,6 @@ function getVersionIdFromDeployBuild(cell, deployBuild) {
     .done(function(data) {
         var searchStringRE = /\n\/var\/lib\/jenkins\/workspace\/mosaik-master-deploy\/experience-client\/target\/dist\/js\/editor-main\.(.*)\.js\n/
         match = searchStringRE.exec(data)[1];
-        //console.log(url);
-        //console.log(match);
         cell.title = match;
     })
 }
@@ -563,7 +538,7 @@ function buildServerCell(elem, eCellTgl) {
                 xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
             }
         })
-        .done(function(data) { // console.log("Data: " + data); console.log(data)
+        .done(function(data) { 
             var subBuildServerJSON = data;
             var subBuildServer = subBuildServerJSON.builtOn;
             var subBuildServerNum = cleanBuildServerNum(subBuildServer);
@@ -572,7 +547,7 @@ function buildServerCell(elem, eCellTgl) {
             elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
             
-            // is built being kept
+            // is built being kept?
             var keeping;
             if (subBuildServerJSON.keepLog == true) {
                 keeping = "keep";
