@@ -507,7 +507,7 @@ function getVersionIdFromDeployBuild(cell, deployBuild) {
         }
     })
     .done(function(data) {
-        var searchStringRE = /\n\/var\/lib\/jenkins\/workspace\/mosaik-master-deploy\/experience-client\/target\/dist\/js\/editor-main\.(.*)\.js\n/
+        var searchStringRE = /\n\/home\/jenkins\/build\/workspace\/mosaik-master-deploy\/experience-client\/target\/dist\/js\/editor-main\.(.*)\.js\n/
         match = searchStringRE.exec(data)[1];
         cell.title = match;
     })
