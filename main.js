@@ -70,7 +70,7 @@ function mainAjaxDef (data){
         var cell = table.rows[0].insertCell(-1);
         cell.innerHTML = "<a href='" + buildData.url + "' target='_blank'>" + buildData.displayName + "</a>";
         if (paramNumBuilds <= 25) {
-               cell.innerHTML = cell.innerHTML.concat("<a class='masterbuild buildserverlink' id=\"job/mosaik-master-functionaltests/" + buildData.id +"/\" onclick='buildServerColumn(this.parentNode.cellIndex)'><img src='img/letter_s.png' /></a>");
+               cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + buildData.displayName +" onclick='buildServerColumn(this.parentNode.cellIndex)'><img src='img/letter_s.png' /></a>");
             }
         switch (buildData.result) {
     			case "SUCCESS":
@@ -436,9 +436,8 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
         eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;                              // cell 6: subtest-id#
         buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl)    // cell 7-8: build-server + toggle
     } else {               // green build row
-        eCellTest.innerHTML = "All";
-        eCellTId.innerHTML = "";
-        buildServerCell(table.rows[0].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl);
+        eCellTest.innerHTML = "All"
+        eCellTId.innerHTML = ""
     }
     
     eCellTgl.className = "toggleCell";
@@ -534,22 +533,20 @@ function buildServerCell(elem, eCellTgl) {
         $.ajax({
             url: url + "api/json?tree=builtOn,keepLog",
             dataType: "json",
-            async: false,
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("Authorization", "Basic " + token);
                 xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
             }
         })
-        .done(function(data) {
+        .done(function(data) { 
             var subBuildServerJSON = data;
-            if (!elem.classList.contains("masterbuild")){  //className == "masterbuild") {
-                var subBuildServer = subBuildServerJSON.builtOn;
-                var subBuildServerNum = cleanBuildServerNum(subBuildServer);
+            var subBuildServer = subBuildServerJSON.builtOn;
+            var subBuildServerNum = cleanBuildServerNum(subBuildServer);
             
-                elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/' + subBuildServer + '/');
-                elem.setAttribute('target','_blank');
-                elem.innerHTML = subBuildServerNum;
-            }
+            elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/' + subBuildServer + '/');
+            elem.setAttribute('target','_blank');
+            elem.innerHTML = subBuildServerNum;
+            
             // is built being kept?
             var keeping;
             if (subBuildServerJSON.keepLog == true) {
@@ -567,15 +564,8 @@ function buildServerCell(elem, eCellTgl) {
                 } else {
                     keepImg = "./img/minus_sign.gif";
                 }
-                var toggleFunc;
-                if (eCellTgl.parentNode.classList.contains("success")) {
-                    toggleFunc = "toggleLogKeepRow";
-                } else {
-                    toggleFunc = "toggleLogKeep";
-                }
-                eCellTgl.innerHTML = "<img onclick='" + toggleFunc + "(\"" + elem.id + "\", " + eCellTgl.parentNode.rowIndex + ");' src='"+keepImg+"' />";
+                eCellTgl.innerHTML = "<img onclick='toggleLogKeep(\"" + elem.id + "\", " + eCellTgl.parentNode.rowIndex + ");' src='"+keepImg+"' />";
             }
-            
         });
     }
 }
@@ -600,70 +590,12 @@ function toggleLogKeep(elemId, eCellTglRef) {
     if (elemId !== undefined) {
         url = baseUrl + elemId;
         elem = document.getElementById(elemId);
-        eCellTgl = eCellTglRef?document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0]:eCellTglRef; // null if null; set otherwise
-        
-        var wndM = window.open(url + "toggleLogKeep", '_blank'); 
-        wndM.blur();
-        setTimeout(function(){ wndM.close() }, 50);
+        eCellTgl = document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0];
+        var wnd = window.open(url + "toggleLogKeep", '_blank'); 
+        wnd.blur();
+        setTimeout(function(){ wnd.close() }, 50);
         buildServerCell(elem, eCellTgl);
     }
-    
-  /*  if (elem.classList.contains("masterbuild")){  //.className == "masterbuild") {
-                 var index = elem.parentNode.cellIndex;
-                var table = document.getElementById('table');
-                var keeping = elem.parentNode.classList.contains("keep");
-                for (var j=6; j < table.rows.length; j++) {
-                    subTestElem =  table.rows[j].cells[index].getElementsByClassName('buildserverlink')[0];
-                    buildServerCell(subTestElem, null);
-                }
-                for (var j=6; j < table.rows.length; j++) {
-                    subTestElem =  table.rows[j].cells[index].getElementsByClassName('buildserverlink')[0];
-                    if (subTestElem.classList.contains("keep") != keeping) {
-                        toggleLogKeep(subTestElem.id, null);
-                    }
-                    
-                }
-            } */
 }
 
-// toggleLogKeepRow(): run toggleLogKeep on superbuild and all subbuilds
-function toggleLogKeepRow(elemId, eCellTglRef) {
-    toggleLogKeep(elemId, eCellTglRef);//.done(
-        //function() {
-            var index = elem.parentNode.cellIndex;
-            var table = document.getElementById('table');
-            var keeping = elem.parentNode.classList.contains("keep");
-            console.log("1 keeping: " + keeping)
-            var wnd = [];
-            for (var j=6; j < table.rows.length; j++) {
-                    subTestElem =  table.rows[j].cells[index].getElementsByClassName('buildserverlink')[0];
-                    console.log("2 " + subTestElem.id + " " + subTestElem.parentNode.className);
-                    if (subTestElem.parentNode.classList.contains("keep") != keeping) {
-                        //toggleLogKeep(subTestElem.id, null);
-                        url = "https://sha:" +token+"@creatorci.eu.zmags.com/" + subTestElem.id;
-                        elem = document.getElementById(subTestElem.id);
-                        //eCellTgl = eCellTglRef?document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0]:eCellTglRef; // null if null; set otherwise
-                        //$.ajax(url + "toggleLogKeep");
-                        wnd[j] = window.open(url + "toggleLogKeep", '_blank');
-                        
-                        //wnd[j].blur();
-                        //setTimeout(function(){ wnd[j].close() }, 50);    
-                    }
-                    buildServerColumn(index);
-                    
-            }
-            /*
-            for (var j=6; j < table.rows.length; j++) {
-                if (wnd[j]) {
-                    wnd[j].close()
-                    
-                    subTestElem =  table.rows[j].cells[index].getElementsByClassName('buildserverlink')[0];
-                    console.log("3 " + subTestElem.id + " " + subTestElem.parentNode.className);
-                }
-            }
-            */
-                 
-         //});
-    
-}
 // utilities END
