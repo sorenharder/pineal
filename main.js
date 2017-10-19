@@ -5,7 +5,7 @@ var baseUrl = "https://creatorci.eu.zmags.com/",
     paramNumBuilds = 24,
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/135/api/json?tree=*,subBuilds[*]&depth=1",
     // url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*]]{0,20}&depth=1",
-    
+
     // to get build (master/branch): https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[actions[parameters[*]]]{21,22}&depth=1&pretty
     url = "https://creatorci.eu.zmags.com/job/mosaik-master-functionaltests/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{" +
                 paramSkip + "," + paramNumBuilds + "}&depth=1",
@@ -30,43 +30,43 @@ function mainAjaxDat(url) {
 }
 
 function mainAjaxDef (data){
-    
+
     // set table header
     var table = document.getElementById('table');
     var tableRow = table.insertRow(0);
-    
+
     var tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "TC Build";
-    
+
     tableRow = table.insertRow(1);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Duration";
-    
+
     tableRow = table.insertRow(2);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Timestamp";
-    
+
     tableRow = table.insertRow(3);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Branch";
-    
+
     tableRow = table.insertRow(4);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Started by";
-    
+
     tableRow = table.insertRow(5);
     tableCell = tableRow.insertCell(0);
     tableCell.innerHTML = "Review";
-    
-    
- 
+
+
+
     // iterate over builds
     for (var j = 0; j < data.allBuilds.length; j++) {
     	buildData = data.allBuilds[j];
-        
+
         ///////////////////////////////////
         // row 0: build number
-        
+
         var cell = table.rows[0].insertCell(-1);
         cell.innerHTML = "<a href='" + buildData.url + "' target='_blank'>" + buildData.displayName + "</a>";
         if (paramNumBuilds <= 25) {
@@ -88,10 +88,10 @@ function mainAjaxDef (data){
     				break;
             }
         cell.setAttribute('class',tdclass);
-        
+
         ///////////////////////////////////
         // row 1: duration
-        
+
         cell = table.rows[1].insertCell(-1);
         dur = new Date(buildData.duration);
         if (buildData.building) {
@@ -106,10 +106,10 @@ function mainAjaxDef (data){
                 cell.title = durString;
             }
         }
-        
+
         ///////////////////////////////////
         // row 2: timestamp
-        
+
         cell = table.rows[2].insertCell(-1);
         cell.title = new Date(buildData.timestamp);
         var dateString = new Date(buildData.timestamp).toString().split(" ")[4];
@@ -119,17 +119,17 @@ function mainAjaxDef (data){
             cell.innerHTML = '*';
             cell.className = 'ellipsis';
         }
-        
+
         ///////////////////////////////////
         // row 3: branch built
-        
+
         cell = table.rows[3].insertCell(-1);
-        
+
         // find the unique branchString: buildData.actions[x].parameters[x] = {name="BUILD", value=branchString}, default to '<i>default</i>'
         var branchString = 'noBranch';
         var actions = buildData.actions;
         var parameters = [];
-        
+
         /*
          * alternative solution for code below
         for (var i = 0; i < actions.length; i++) {
@@ -145,19 +145,19 @@ function mainAjaxDef (data){
             }
         }
         */
-        
+
         parameters = actions.reduce(function(result, a) {
             return a.parameters ? a.parameters : result;
         }, null);
-        
+
         branchString = parameters.reduce(function (result, p) {
             return p.name === "BUILD" ? p.value : result;
         }, null);
-        
+
         if (branchString === ''){
             branchString = 'Akamai' ;
         }
-        
+
         if (paramNumBuilds <= 25) {
             cell.innerHTML = branchString;
         } else {
@@ -168,11 +168,11 @@ function mainAjaxDef (data){
 
         ///////////////////////////////////
         // row 4: started by
-        
+
         cell = table.rows[4].insertCell(-1);
-        
+
         // find the unique causes: buildData.actions[x].causes[x] = {shortDescription="Started by .*"}
-        
+
         /*
          * alternative solution for code below
             var causes = buildData.actions.reduce(function (result, c) {
@@ -181,21 +181,21 @@ function mainAjaxDef (data){
                 //code
             }
             return c.causes ? result.push(c.causes) : result;
-        }, []); 
+        }, []);
         */
-        
+
         var causes = buildData.actions.reduce(function (array, action) {
             if (action.causes) {
                 array.push(action.causes[0]);
             }
-            
+
             return array;
         }, []);
-        
-        var startedByJSON = causes.find(function (cause) {         
+
+        var startedByJSON = causes.find(function (cause) {
             return cause.shortDescription && cause.shortDescription.indexOf("Started by") > -1;
         });
-        
+
         startedByCellTitle = '';
         if (startedByJSON.shortDescription === "Started by timer") {
             startedBy = "timer";
@@ -207,7 +207,7 @@ function mainAjaxDef (data){
         } else {
             startedBy = "???";
         }
-        
+
         if (paramNumBuilds <= 25) {
             cell.innerHTML = startedBy;
         } else {
@@ -218,19 +218,19 @@ function mainAjaxDef (data){
             }
             cell.className = 'ellipsis';
         }
-        
+
         //cell.title = (cell.title != '')?cell.title:startedBy;
         cell.title = startedBy; // overwritten by getVersionId ajax
-        
+
         ///////////////////////////////////
         // row 5: select for review
-        
+
         cell = table.rows[5].insertCell(-1);
         cell.innerHTML = "<input type='checkbox' name='review' class='review' onclick='review();' value=" + buildData.displayName + ">";
         if (paramNumBuilds > 25){
             cell.className = 'ellipsis';
         }
-        
+
         ///////////////////////////////////
         // row n: subtests
     	for (var i = 0; i < buildData.subBuilds.length; i++) {
@@ -246,25 +246,25 @@ function mainAjaxDef (data){
     				tdclass = "unknown";
     				break;
             }
-            
+
             var jobName = subBuildData.jobName,
                 url = baseUrl + subBuildData.url + "TestComplete/",
                 buildNumber = subBuildData.buildNumber;
-            
+
             // test introduced to table when found first time
             if (!document.getElementById(jobName)) {
-                
+
                 // $("#table").append("<tr id=" + jobName + ">");
                 var row = table.insertRow(-1);
                 row.setAttribute('id',jobName);
-                
+
                 // $("#table").append("   <td> " + jobName (+ buildserverlink) + " </td>");
                 cell = row.insertCell(0);
                 cell.innerHTML = '<a href="' + baseUrl + 'job/' + jobName + '">' + jobName + '</a>';
                 if (paramNumBuilds <= 25) {
                     cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + jobName +" onclick='buildServerRow(this.parentNode.parentNode)'><img src='img/letter_s.png' /></a>");
                 }
-                
+
                 // pad empty cells to the left
                 for(var k = table.childNodes[0].cells.length - 2; k > 0; k--) {
                     cell = row.insertCell(1);
@@ -274,15 +274,15 @@ function mainAjaxDef (data){
             } else {
                 var row = document.getElementById(jobName);
             }
-            
+
             cell = row.insertCell(-1);
             cell.setAttribute('class',tdclass);
             cell.innerHTML = "<a href='" + url + "' target='_blank'>" + buildNumber + "</a>";
-            
-            // 0-sized link function            
-            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");     
+
+            // 0-sized link function
+            cell.innerHTML = cell.innerHTML.concat("<a class=buildserverlink id=" + subBuildData.url +" onclick='buildServerCell(this, null)'></a>");
         }
-        
+
         // pad to the right (just this one column)
         for (l = 0; l < table.children.length ; l++) {
             var row = table.children[l];
@@ -291,7 +291,7 @@ function mainAjaxDef (data){
                 cell.setAttribute('class',"pending");
                 cell.innerHTML = "n/a";
             }
-        }   
+        }
     }
 };
 
@@ -311,12 +311,12 @@ function reload(url) {
 // main table END
 
 // errors table BEGIN
-    
+
 var errorH1 = document.createElement("H1");
 errorH1.innerHTML = "Errors";
 
 var errorP = document.createElement("P");
-errorP.innerHTML = "To use the 'toggle' functionality, you need to be logged in to Jenkins. Use the 'testId' links to get login screen." 
+errorP.innerHTML = "To use the 'toggle' functionality, you need to be logged in to Jenkins. Use the 'testId' links to get login screen."
 
 var errorTable = document.createElement("table");
 errorTable.setAttribute('id','errortest');
@@ -330,19 +330,19 @@ function review() {
     var cellNo,
         errorCell,
         table = document.getElementById('table'); // main table
-   
+
     var reviewCont = document.getElementById('review');
     reviewCont.innerHTML = "";  // error main div
     errorTable.innerHTML = "";  // table in div
-    
+
     var reviewArrayChecked = document.querySelectorAll('.review:checked');
     if (reviewArrayChecked.length > 0) {
-        
+
         // set up div/table: reviewCont.innerHTML = "<h1>Error</h1><table id='errortest' />";
         reviewCont.appendChild(errorH1);
         reviewCont.appendChild(errorP);
         reviewCont.appendChild(errorTable);
-        
+
         var errorHeader = errorTable.createTHead();
         var errorHRow = errorHeader.insertRow(0);
         for(i = 0; i < 9; i++) {
@@ -357,41 +357,41 @@ function review() {
         errorHRow.cells[6].innerHTML = "testId";
         errorHRow.cells[7].innerHTML = "server";
         errorHRow.cells[8].innerHTML = "toggle";
-        
+
         var errorTableB = document.createElement("tbody");
         errorTable.appendChild(errorTableB);
-        
+
         // iterate over tick-selected builds
         for (i = 0; i < reviewArrayChecked.length; i++){
-            
+
             var failure = false;
-            // iterate over tests (in selected builds) 
+            // iterate over tests (in selected builds)
             for (var j=6; j < table.rows.length; j++) {
                 cellNo = reviewArrayChecked[i].parentNode.cellIndex;
                 cell = table.rows[j].cells[cellNo];
                 if (cell.className.includes("fail")) { //  TODO: || cell.className.includes("unknown") but fix colour and timestamp
                     failure = true;
                     url = baseUrl + cell.lastChild.id;
- 
+
                     makeErrorRow(errorTableB, table, cellNo, j);
-                    
-                }                
+
+                }
             }
-            
-            if (!failure) { 
-                url = baseUrl + "/job/mosaik-master-functionaltests/" + (table.rows[0].cells[cellNo].textContent).substring(1) + "/"; 
+
+            if (!failure) {
+                url = baseUrl + "/job/mosaik-master-functionaltests/" + (table.rows[0].cells[cellNo].textContent).substring(1) + "/";
                 errorRow = makeErrorRow(errorTableB, table, cellNo, -1);
             }
             //failure = false;
         }
     }
-    
+
 }
 
 function makeErrorRow(errorTableB, table, cellNo, testId) {
-    
+
     var errorRow = errorTableB.insertRow(0);
-    
+
     var eCellBuild = errorRow.insertCell(0);
     var eCellTime = errorRow.insertCell(1)
     var eCellStarter = errorRow.insertCell(2);
@@ -401,10 +401,10 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
     var eCellTId = errorRow.insertCell(6);
     var eCellBServ = errorRow.insertCell(7);
     var eCellTgl = errorRow.insertCell(8);
-    
+
     if (testId != -1) {                  // red test
         //errorRow.classList.add("fail");
-        errorsAjaxDat(errorRow); 
+        errorsAjaxDat(errorRow);
     } else {                            // green builds
         date = new Date(table.rows[2].cells[cellNo].title);
         eCellTime.innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
@@ -414,10 +414,10 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
             errorRow.classList.add("success");
         }
     }
-    
-    // cell 0: branch name              
+
+    // cell 0: branch name
     eCellBuild.innerHTML = table.rows[3].cells[cellNo].textContent;
-    
+
     // cell 2+3: starter/id
     if (table.rows[4].cells[cellNo].firstChild.id == "upstream_build") {
         eCellStarter.innerHTML = "SCM"; //not always right: use https://creatorci.eu.zmags.com/job/mosaik-master-mb/3749/api/json?tree=actions[causes[userId,shortDescription]]&pretty
@@ -426,22 +426,22 @@ function makeErrorRow(errorTableB, table, cellNo, testId) {
         eCellStarter.innerHTML = table.rows[4].cells[cellNo].textContent;
         eCellStId.innerHTML = "";
     }
-    
+
     // cell 4: test-master-id#
     eCellMBuild.innerHTML = (table.rows[0].cells[cellNo].textContent).substring(1);
 
     // cell 5-8: failed test info (or 'All')
     if (testId != -1) {   // red test row
-        eCellTest.innerHTML = (table.rows[testId].id).substring(10);                                                // cell 5: testname; strip TC_Editor/TC_Viewer   
+        eCellTest.innerHTML = (table.rows[testId].id).substring(10);                                                // cell 5: testname; strip TC_Editor/TC_Viewer
         eCellTId.innerHTML = table.rows[testId].cells[cellNo].childNodes[0].outerHTML;                              // cell 6: subtest-id#
         buildServerCell(table.rows[testId].cells[cellNo].getElementsByClassName("buildserverlink")[0], eCellTgl)    // cell 7-8: build-server + toggle
     } else {               // green build row
         eCellTest.innerHTML = "All"
         eCellTId.innerHTML = ""
     }
-    
+
     eCellTgl.className = "toggleCell";
-    return errorRow;            
+    return errorRow;
 }
 
 function errorsAjaxDat(errorRow) {
@@ -454,7 +454,7 @@ function errorsAjaxDat(errorRow) {
                             xhr.setRequestHeader("Authorization", "Basic " + token);
                             xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
                         }
-                        
+
                     })
 }
 function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); console.log(data)
@@ -463,9 +463,9 @@ function errorsAjaxDef(data, errorRow) { // console.log("Data: " + data); consol
                         date = new Date(data.reports[0].details.timestamp);
                         date.setHours(date.getHours() -2); // 2h error in timestamp (error in Jenkins/TE integration)
                         errorRow.cells[1].innerHTML = date.toLocaleDateString("en-US", {month: 'short', day: 'numeric', year: 'numeric'}) + " " + date.toLocaleTimeString("en-US");
-                        
+
                         errorRow.cells[7].innerHTML = cleanBuildServerNum(data.reports[0].agent);
-                        
+
                         errorRow.cells[6].firstChild.setAttribute("href", data.reports[0].url);
                         errorRow.cells[6].firstChild.setAttribute("target", "_blank");
 }
@@ -491,7 +491,7 @@ function getVersionId(cell, masterBuild) {
             if (subBuilds[i].url.indexOf("mosaik-master-deploy") != -1) {
                 subBuildUrl = subBuilds[i].url;
                 break;
-            }            
+            }
         }
         getVersionIdFromDeployBuild(cell, subBuildUrl);
     })
@@ -507,7 +507,7 @@ function getVersionIdFromDeployBuild(cell, deployBuild) {
         }
     })
     .done(function(data) {
-        var searchStringRE = /\n\/home\/jenkins\/build\/workspace\/mosaik-master-deploy\/experience-client\/target\/dist\/js\/editor-main\.(.*)\.js\n/
+        var searchStringRE = /File key: js\/editor-main\.(.*)\.js/
         match = searchStringRE.exec(data)[1];
         cell.title = match;
     })
@@ -519,7 +519,7 @@ function cleanBuildServerNum(subBuildServerNum) {
     subBuildServerNum = subBuildServerNum.replace("testcomplete-11.20_","M");  // Minsky's servers -- remove after a while
     subBuildServerNum = subBuildServerNum.replace("testcomplete","TC");
     subBuildServerNum = subBuildServerNum.replace("TestComplete","");         // Firas'/Pavels servers
-    subBuildServerNum = subBuildServerNum.replace(/^.{3,}([12345])$/,"?$1");      
+    subBuildServerNum = subBuildServerNum.replace(/^.{3,}([12345])$/,"?$1");
     return subBuildServerNum
 }
 
@@ -529,7 +529,7 @@ function cleanBuildServerNum(subBuildServerNum) {
 function buildServerCell(elem, eCellTgl) {
     if (elem !== undefined) {
         url = baseUrl + elem.id;
-        
+
         $.ajax({
             url: url + "api/json?tree=builtOn,keepLog",
             dataType: "json",
@@ -538,15 +538,15 @@ function buildServerCell(elem, eCellTgl) {
                 xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.5");
             }
         })
-        .done(function(data) { 
+        .done(function(data) {
             var subBuildServerJSON = data;
             var subBuildServer = subBuildServerJSON.builtOn;
             var subBuildServerNum = cleanBuildServerNum(subBuildServer);
-            
+
             elem.setAttribute('href','https://creatorci.eu.zmags.com/computer/' + subBuildServer + '/');
             elem.setAttribute('target','_blank');
             elem.innerHTML = subBuildServerNum;
-            
+
             // is built being kept?
             var keeping;
             if (subBuildServerJSON.keepLog == true) {
@@ -591,7 +591,7 @@ function toggleLogKeep(elemId, eCellTglRef) {
         url = baseUrl + elemId;
         elem = document.getElementById(elemId);
         eCellTgl = document.getElementById("errortest").rows[eCellTglRef].getElementsByClassName("toggleCell")[0];
-        var wnd = window.open(url + "toggleLogKeep", '_blank'); 
+        var wnd = window.open(url + "toggleLogKeep", '_blank');
         wnd.blur();
         setTimeout(function(){ wnd.close() }, 50);
         buildServerCell(elem, eCellTgl);
