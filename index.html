@@ -1,0 +1,22 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <title>TestComplete tests in Jenkins</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="main.js"></script>
+    <link rel="stylesheet" type="text/css" href="./mystyle.css">
+</head>
+<body>
+    <hr>
+    <img  src="img/update_icon.png" onclick="reload(url);">
+    Show <input class="num" type="number" name="num_builds" max="100" min="0" value="24" id="num_builds"> builds skipping the <input class="num" type="number" name="skip" min="0" value="0" size=3 id="skip"> last.
+    <hr>
+    <table>
+        <tbody id="table"></tbody>
+    </table>
+    
+    <div id="review"></div>
+   
+</body>
+</html>

@@ -1,0 +1,85 @@
+table {
+    /* border-collapse: collapse; */
+    border-spacing: 0px;
+}
+td {
+    border: 2px solid white;
+}
+td.fail {
+    background-color: red;
+    border: red;
+}
+td.success {
+    background-color: green;
+    border: green;
+}
+td.unknown {
+    background-color: yellow;
+    border: yellow;
+}
+td.building, td.pending {
+    background-color: pink;
+    text-align: center;
+    border: pink;
+}
+
+td.not_keep {
+    border: 1px solid lightgreen; 
+}
+
+td.keep {
+    border: 2px solid black;
+}
+
+input.num {
+    width: 40px;
+}
+
+td.ellipsis {
+    cursor: pointer;
+    text-align: center;
+}
+
+a.buildserverlink {
+    float: right;
+}
+
+a.buildserverlink img {
+    height: 70%;
+    width: 70%;
+    float: right;
+}
+
+input.review {
+
+}
+
+table#errortest td {
+    border: 1px solid black;
+}
+table#errortest thead tr td {
+    background-color: grey;
+}
+
+table#errortest tr.fail {
+    background-color: red;
+}
+
+table#errortest tr.success {
+    background-color: green;
+}
+
+table#errortest tr.unknown {
+    background-color: yellow;
+}
+table#errortest a {
+    color: #dddddd;
+}
+
+table#errortest td.toggleCell {
+    text-align: center;
+}
+
+table#errortest td.toggleCell img {
+    cursor: pointer;
+}
