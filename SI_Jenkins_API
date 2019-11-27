@@ -1,0 +1,6 @@
+// These are some useful API calls for if/when this tool should be ported to Siteimproves Jenkins setup for automated testing
+https://ci.siteimprove.systems/view/Test-Automation/job/selenium-timer/api/json?tree=allBuilds[*,subBuilds[*],actions[parameters[*],causes[*]]]{0,1}&depth=1
+https://ci.siteimprove.systems/view/Test-Automation/job/selenium-timer/api/json?tree=allBuilds[actions[triggeredBuilds[url]]]{0,1}&depth=6
+https://ci.siteimprove.systems/job/selenium-tests/3775/api/json?tree=*,artifacts[*],actions[parameters[*]]&depth=2
+// console text: this is probably the one we should use
+https://ci.siteimprove.systems/job/selenium-tests/3775/consoleText
